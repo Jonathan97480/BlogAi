@@ -28,12 +28,12 @@ function SearchResults() {
     }, [q]);
 
     return (
-        <div className="p-6">
+        <div className="w-full max-w-[1400px] mx-auto p-6">
             <h1 className="text-2xl font-bold mb-4">Résultats pour "{q}"</h1>
             {loading && <div>Chargement...</div>}
             {error && <div className="text-red-500">{error}</div>}
             {!loading && !error && posts.length === 0 && <div>Aucun article trouvé.</div>}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {posts.map(post => (
                     <PostCard key={post.id} post={post} />
                 ))}

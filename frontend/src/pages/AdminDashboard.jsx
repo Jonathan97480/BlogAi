@@ -80,7 +80,7 @@ function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen flex bg-gray-900 text-white">
+        <div className="min-h-screen w-full max-w-none flex bg-gray-900 text-white">
             {/* Sidebar */}
             <aside className="w-64 bg-gray-950 flex flex-col py-8 px-4 shadow-lg min-h-screen">
                 <span className="text-2xl font-bold text-blue-500 mb-10">AI Tech Blog</span>
@@ -97,7 +97,7 @@ function AdminDashboard() {
                 <button onClick={handleLogout} className="mt-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Se déconnecter</button>
             </aside>
             {/* Contenu principal */}
-            <main className="flex-1 p-10">
+            <main className="flex-1 min-w-0 w-full p-6 md:p-10 overflow-x-hidden">
                 {view === 'articles' && <>
                     <h1 className="text-3xl font-bold mb-6">Articles</h1>
                     <button
@@ -137,36 +137,38 @@ function AdminDashboard() {
                         />
                     )}
                     {error && <div className="text-red-500 mb-4">{error}</div>}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {posts.map(post => (
-                            <div key={`article-${post.id}`} className="bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative flex gap-4 items-start">
-                                <div className="absolute top-2 right-2 flex gap-2">
-                                    <button
-                                        title="Éditer"
-                                        className="text-blue-400 hover:text-blue-600 p-1"
-                                        onClick={() => { setEditArticle(post); setShowEditor(true); }}
-                                    >
-                                        <FaRegEdit size={20} />
-                                    </button>
-                                    <button
-                                        title="Archiver"
-                                        className="text-red-400 hover:text-red-600 p-1"
-                                        onClick={() => handleArchive(post.id)}
-                                    >
-                                        <FaRegTrashAlt size={20} />
-                                    </button>
+                            <div key={`article-${post.id}`} className="bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative">
+                                <div className="mb-2 flex items-start justify-between gap-3">
+                                    <h2 className="text-xl font-bold text-blue-300">{post.title}</h2>
+                                    <div className="flex gap-2 shrink-0">
+                                        <button
+                                            title="Éditer"
+                                            className="text-blue-400 hover:text-blue-600 p-1"
+                                            onClick={() => { setEditArticle(post); setShowEditor(true); }}
+                                        >
+                                            <FaRegEdit size={20} />
+                                        </button>
+                                        <button
+                                            title="Archiver"
+                                            className="text-red-400 hover:text-red-600 p-1"
+                                            onClick={() => handleArchive(post.id)}
+                                        >
+                                            <FaRegTrashAlt size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                                 {/* Miniature de l'image */}
                                 {post.media_url && (
                                     <img
-                                        src={post.media_url.startsWith('/img/') ? `http://localhost:5000${post.media_url}` : post.media_url}
+                                        src={post.media_url.startsWith('/img/') ? post.media_url : post.media_url}
                                         alt={post.title}
-                                        className="w-16 h-16 object-cover rounded mr-3 border border-gray-700"
-                                        style={{ flexShrink: 0 }}
+                                        className="w-full h-44 object-cover rounded mb-3 border border-gray-700"
+                                        
                                     />
                                 )}
-                                <div className="flex-1">
-                                    <h2 className="text-xl font-bold text-blue-300 mb-2">{post.title}</h2>
+                                <div>
                                     <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>
                                     {post.page_titre && (
                                         <p className="text-gray-400 mb-2">Page liée : <span className="font-semibold text-blue-400">{post.page_titre}</span></p>
@@ -183,9 +185,9 @@ function AdminDashboard() {
                 {view === 'archives' && <>
                     <h1 className="text-3xl font-bold mb-6">Articles archivés</h1>
                     {archived.length === 0 && <div className="text-gray-400">Aucun article archivé.</div>}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {archived.map(post => (
-                            <div key={`archive-${post.archive_id}`} className="bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative flex gap-4 items-start">
+                            <div key={`archive-${post.archive_id}`} className="bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative">
                                 <div className="absolute top-2 right-2 flex gap-2">
                                     <button
                                         title="Désarchiver"
@@ -234,14 +236,13 @@ function AdminDashboard() {
                                 </div>
                                 {post.media_url && (
                                     <img
-                                        src={post.media_url.startsWith('/img/') ? `http://localhost:5000${post.media_url}` : post.media_url}
+                                        src={post.media_url.startsWith('/img/') ? post.media_url : post.media_url}
                                         alt={post.title}
-                                        className="w-16 h-16 object-cover rounded mr-3 border border-gray-700"
-                                        style={{ flexShrink: 0 }}
+                                        className="w-full h-44 object-cover rounded mb-3 border border-gray-700"
+                                        
                                     />
                                 )}
-                                <div className="flex-1">
-                                    <h2 className="text-xl font-bold text-blue-300 mb-2">{post.title}</h2>
+                                <div>
                                     <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>
                                     <p className="text-gray-300 mb-2">{post.excerpt}</p>
                                     <span className="text-xs text-gray-500">Archivé le {new Date(post.archived_at).toLocaleDateString('fr-FR')}</span>

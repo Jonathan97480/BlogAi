@@ -2,6 +2,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { Editor } from '@tinymce/tinymce-react';
+import 'tinymce/tinymce';
+import 'tinymce/icons/default';
+import 'tinymce/themes/silver';
+import 'tinymce/models/dom';
+import 'tinymce/plugins/advlist';
+import 'tinymce/plugins/autolink';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/link';
+import 'tinymce/plugins/image';
+import 'tinymce/plugins/charmap';
+import 'tinymce/plugins/preview';
+import 'tinymce/plugins/anchor';
+import 'tinymce/plugins/searchreplace';
+import 'tinymce/plugins/visualblocks';
+import 'tinymce/plugins/code';
+import 'tinymce/plugins/fullscreen';
+import 'tinymce/plugins/insertdatetime';
+import 'tinymce/plugins/media';
+import 'tinymce/plugins/table';
+import 'tinymce/plugins/wordcount';
+import 'tinymce/skins/ui/oxide/skin.min.css';
+import 'tinymce/skins/content/default/content.min.css';
 
 function ArticleEditor({ article, onArticleSaved, onClose }) {
     const [title, setTitle] = useState(article?.title || '');
@@ -124,7 +146,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                 title="Fermer l'éditeur"
                 onClick={() => {
                     if (window.confirm('Voulez-vous vraiment fermer l’éditeur ? Les modifications non sauvegardées seront perdues.')) {
-                        setTitle(''); setCategory(''); setContent(''); setImage(null);
+                        setTitle(''); setCategoryId(''); setContent(''); setImage(null);
                         if (onClose) onClose();
                     }
                 }}
@@ -159,8 +181,6 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                     </select>
                 </div>
                 <Editor
-                    apiKey="achb04xc9fa4j0bz6aritvvp19qrjlhzreep7kf7ir8td366"
-                    tinymceScriptSrc="https://cdn.tiny.cloud/1/achb04xc9fa4j0bz6aritvvp19qrjlhzreep7kf7ir8td366/tinymce/6/tinymce.min.js"
                     value={content}
                     init={{
                         height: 600,
@@ -168,10 +188,10 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         plugins: [
                             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
                             'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                            'insertdatetime', 'media', 'table', 'wordcount'
                         ],
                         toolbar:
-                            'undo redo | formatselect | bold italic backcolor | \n+                            alignleft aligncenter alignright alignjustify | \n+                            bullist numlist outdent indent | removeformat | help | image',
+                            'undo redo | formatselect | bold italic backcolor | \n+                            alignleft aligncenter alignright alignjustify | \n+                            bullist numlist outdent indent | removeformat | image',
                         images_upload_handler: (blobInfo, progress) => {
                             return new Promise(async (resolve, reject) => {
                                 try {
@@ -194,7 +214,11 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                                 }
                             });
                         },
-                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px }'
+                        image_dimensions: true,
+                        object_resizing: 'img',
+                        resize_img_proportional: true,
+                        extended_valid_elements: 'img[class|src|border=0|alt|title|width|height|style]',
+                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px } img{max-width:100%;height:auto;}'
                     }}
                     onEditorChange={setContent}
                 />

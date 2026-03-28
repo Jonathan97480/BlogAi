@@ -40,11 +40,14 @@ router.get('/search', async (req, res) => {
         // On suppose que les articles archivés sont dans la table archives (clé post_id)
         // et que les articles non archivés sont ceux qui ne sont pas dans archives
         const [rows] = await pool.query(`
-            SELECT p.* FROM posts p
+            SELECT p.*, m.url AS media_url, c.name AS category
+            FROM posts p
+            LEFT JOIN media m ON p.media_id = m.id
+            LEFT JOIN categorie c ON p.category_id = c.id
             LEFT JOIN archives a ON a.post_id = p.id
             WHERE a.post_id IS NULL
               AND (p.title LIKE ? OR p.content LIKE ?)
-            ORDER BY p.id DESC
+            ORDER BY p.created_at DESC
         `, [`%${q}%`, `%${q}%`]);
         res.json(rows);
     } catch (err) {
@@ -95,11 +98,9 @@ router.get('/images', (req, res, next) => {
             // Vérifie si l'image est liée à un post (posts ou archives)
             const [[{ count: postCount }]] = await pool.query('SELECT COUNT(*) as count FROM posts WHERE media_id = ?', [img.id]);
             const [[{ count: archiveCount }]] = await pool.query('SELECT COUNT(*) as count FROM posts INNER JOIN archives ON posts.id = archives.post_id WHERE posts.media_id = ?', [img.id]);
-            // Utilise BASE_URL et PORT depuis .env
-            const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
             return {
                 ...img,
-                url: img.url.startsWith('http') ? img.url : `${baseUrl}${img.url}`,
+                url: img.url,
                 isLinked: (postCount > 0 || archiveCount > 0)
             };
         }));
@@ -126,18 +127,17 @@ router.post('/', verifyJWT, upload.single('image'), createPost);
 router.delete('/archives/:postId/permanent', verifyJWT, deletePostAndArchiveController);
 
 
-// Route pour récupérer un article par son id (publique)
-router.get('/:id', getPostById);
-
-// Route pour récupérer tous les articles (publique)
-router.get('/', getAllPosts);
-
-
 // Route pour récupérer les articles archivés
 router.get('/archives', verifyJWT, getArchivedPosts);
 
 // Route pour désarchiver un article (supprime la ligne d'archive)
 router.delete('/archives/:archiveId', verifyJWT, unarchivePost);
+
+// Route pour récupérer tous les articles (publique)
+router.get('/', getAllPosts);
+
+// Route pour récupérer un article par son id (publique)
+router.get('/:id', getPostById);
 
 // Route pour archiver un article
 router.post('/:id/archive', verifyJWT, archivePost);

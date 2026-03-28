@@ -11,8 +11,18 @@ async function adminExists() {
     return rows[0].count > 0;
 }
 
-// Méthode HEAD pour vérifier s'il existe déjà un admin (utilisé par le frontend)
-router.head('/', async (req, res) => {
+// Endpoint non bloquant pour le frontend (évite les 403 visibles côté navigateur)
+router.get('/status', async (_req, res) => {
+    try {
+        res.json({ adminExists: await adminExists() });
+    } catch (err) {
+        logError('registerAdmin.js', err.message);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
+// Méthode HEAD legacy (conservée pour compatibilité)
+router.head('/', async (_req, res) => {
     try {
         if (await adminExists()) {
             return res.sendStatus(403); // Admin existe

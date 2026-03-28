@@ -19,7 +19,7 @@ function PostCard({ post }) {
     const navigate = useNavigate();
     let imageUrl = post.image_url || post.media_url;
     if (imageUrl && imageUrl.startsWith('/img/')) {
-        imageUrl = `http://localhost:5000${imageUrl}`;
+        imageUrl = imageUrl;
     }
     const handleCategoryClick = (e) => {
         e.preventDefault();

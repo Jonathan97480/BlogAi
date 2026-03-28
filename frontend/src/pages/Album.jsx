@@ -37,7 +37,7 @@ function Album() {
                 {images.map(img => (
                     <div key={img.filename} className="bg-gray-800 rounded-lg p-4 shadow flex flex-col items-center">
                         <img
-                            src={img.url ? (img.url.startsWith('/img/') ? `http://localhost:5000${img.url}` : img.url) : `http://localhost:5000/img/${img.filename}`}
+                            src={img.url ? (img.url.startsWith('/img/') ? img.url : img.url) : `/img/${img.filename}`}
                             alt={img.filename}
                             className="w-[300px] h-[300px] object-cover rounded mb-3 border border-gray-700"
                         />

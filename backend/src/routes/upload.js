@@ -37,8 +37,7 @@ router.post('/quill', verifyJWT, upload.single('image'), (req, res) => {
     console.log('[UPLOAD] Fichier reçu:', req.file.originalname, '->', req.file.filename);
     // URL accessible côté client
     const url = `/img/quill/${req.file.filename}`;
-    const fullUrl = `${req.protocol}://${req.get('host')}${url}`;
-    console.log('[UPLOAD] URL retournée:', fullUrl);
+    console.log('[UPLOAD] URL retournée:', url);
     // Ajout dans la table media
     (async () => {
         try {
@@ -46,7 +45,7 @@ router.post('/quill', verifyJWT, upload.single('image'), (req, res) => {
         } catch (err) {
             console.error('[UPLOAD] Erreur insertion media:', err.message);
         }
-        res.json({ location: fullUrl });
+        res.json({ location: url });
     })();
 });
 

@@ -25,7 +25,7 @@ function ArticleView() {
             <div className="mb-2 text-gray-400">Catégorie : {article.category_id}</div>
             <div className="mb-6 text-gray-400">Publié le {new Date(article.created_at).toLocaleDateString()}</div>
             {article.media_url && (
-                <img src={article.media_url.startsWith('/img/') ? `http://localhost:5000${article.media_url}` : article.media_url} alt="" className="mb-6 rounded shadow max-h-96 mx-auto" />
+                <img src={article.media_url.startsWith('/img/') ? article.media_url : article.media_url} alt="" className="mb-6 rounded shadow max-h-96 mx-auto" />
             )}
             <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: article.content }} />
         </div>

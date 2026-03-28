@@ -8,7 +8,8 @@ function Home() {
     useEffect(() => {
         fetch('/api/posts')
             .then(res => res.json())
-            .then(data => setPosts(data));
+            .then(data => setPosts(Array.isArray(data) ? data : []))
+            .catch(() => setPosts([]));
     }, []);
 
     return (
