@@ -138,7 +138,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
 
 
     return (
-        <div className="relative bg-gray-800 p-6 rounded shadow mb-8 max-w-2xl mx-auto">
+        <div className="relative bg-gray-800 p-6 rounded shadow mb-8 mx-auto">
             {/* Bouton fermeture */}
             <button
                 type="button"
@@ -226,13 +226,39 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                     <label className="block mb-1 font-semibold" htmlFor="cover-image">Image de couverture <span className="text-red-500">*</span></label>
                     <input id="cover-image" type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-white bg-gray-700 rounded p-2" />
                 </div>
-                <button
-                    type="submit"
-                    className={`w-full font-bold py-2 rounded ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                    disabled={isDisabled}
-                >
-                    Publier
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        type="submit"
+                        className={`flex-1 font-bold py-2 rounded ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                        disabled={isDisabled}
+                    >
+                        Publier
+                    </button>
+                    <button
+                        type="button"
+                        className="flex-1 font-bold py-2 rounded bg-green-600 hover:bg-green-700 text-white"
+                        onClick={async () => {
+                            if (!content) return alert('Le contenu est vide !');
+                            try {
+                                const res = await fetch('/api/ia/enrich', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ content })
+                                });
+                                const data = await res.json();
+                                if (res.ok && data.enriched) {
+                                    setContent(data.enriched);
+                                } else {
+                                    alert(data.message || 'Erreur lors de l’enrichissement IA');
+                                }
+                            } catch (err) {
+                                alert('Erreur réseau ou serveur IA : ' + err.message);
+                            }
+                        }}
+                    >
+                        Enrichir par IA
+                    </button>
+                </div>
             </form>
             {/* Modal création catégorie */}
             {showCatModal && (

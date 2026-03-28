@@ -1,14 +1,4 @@
 {
-<<<<<<< HEAD
-  "dependencies": {
-    "@tinymce/tinymce-react": "^6.3.0",
-    "react-router-dom": "^7.13.2",
-    "tinymce": "^8.3.2"
-  },
-  "devDependencies": {
-    "chai": "^6.2.2",
-    "shx": "^0.4.0"
-=======
   "name": "blog-backend",
   "version": "1.0.0",
   "main": "index.js",
@@ -33,6 +23,5 @@
     "nodemon": "^3.0.3",
     "supertest": "^7.2.2",
     "vite": "^6.4.1"
->>>>>>> 0b8efbdbcab63e14f4a805c2b4d3a6bd915137a9
   }
 }

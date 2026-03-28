@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 
 
 import postsRouter from './routes/posts.js';
+import iaEnrichRouter from './routes/iaEnrich.js';
 import authRouter from './routes/auth.js';
 import registerAdminRouter from './routes/registerAdmin.js';
 import categoriesRouter from './routes/categories.js';
@@ -21,6 +22,7 @@ app.use('/img', express.static('public/img'));
 
 
 app.use('/api/posts', postsRouter);
+app.use('/api/ia', iaEnrichRouter);
 app.use('/api/login', authRouter);
 app.use('/api/register-admin', registerAdminRouter);
 app.use('/api/categories', categoriesRouter);
