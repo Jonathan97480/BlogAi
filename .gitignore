@@ -1,0 +1,18 @@
+# Node modules
+backend/node_modules/
+frontend/node_modules/
+
+# Environnements
+backend/.env
+frontend/.env
+
+# Logs
+backend/log/
+
+# Autres fichiers à ignorer
+*.log
+.DS_Store
+.env
+
+# Images uploadées (backend)
+backend/public/img/

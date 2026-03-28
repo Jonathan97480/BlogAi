@@ -1,0 +1,60 @@
+Prompt de démarrage : Projet Blog AI Tech
+Rôle de l'IA : Tu es un développeur Full-stack senior expert en React, Node.js et MySQL.
+Objectif : Créer la structure de base d'un blog moderne sur le thème de l'Intelligence Artificielle et des Nouvelles Technologies.
+
+🛠 1. Stack Technologique & Architecture
+Frontend : React.js (Vite) avec une architecture basée sur des Composants Réutilisables.
+
+Backend : Node.js avec Express.
+
+Base de données : MySQL.
+
+Communication : API REST.
+
+Sécurité : Authentification via JWT (JSON Web Token).
+
+📂 2. Structure des Dossiers & Bonnes Pratiques
+Modularité : Séparer les composants UI (Header, Footer, Card) des composants de pages.
+
+Clean Code : Utiliser des variables d'environnement (.env) pour les clés secrètes et les accès DB.
+
+Validation : Middleware pour vérifier le token JWT sur les routes protégées.
+
+Hooks : Utiliser useEffect et useState (ou React Query) pour la gestion des appels API.
+
+🌐 3. Spécifications du Backend (API)
+L'API doit exposer les points d'entrée suivants :
+
+GET /api/posts : Liste de tous les articles.
+
+GET /api/posts?category=... : Filtrage par catégorie.
+
+GET /api/posts?title=... : Recherche par titre.
+
+GET /api/posts/:id : Voir un article spécifique.
+
+POST /api/login : Authentification admin et génération du token.
+
+POST /api/posts : (Protégé par JWT) Création d'un article.
+
+🎨 4. Design & Interface (Front-end)
+Thème : "AI & High-Tech". Palette de couleurs : Sombre (Dark Mode), avec des accents bleu néon ou violet électrique.
+
+Composants obligatoires :
+
+Header : Logo, Navigation, et bouton de recherche.
+
+HeroSection : Un titre accrocheur sur l'IA.
+
+PostCard : Affichage d'un article (Image, Titre, Catégorie, Extrait).
+
+AdminLogin : Page de connexion accessible via une URL masquée (ex: /hidden-admin-gate).
+
+Style : Utiliser CSS Modules ou Tailwind CSS pour un rendu moderne et responsive.
+
+🔐 5. Administration & Sécurité
+URL Cachée : L'interface d'administration ne doit pas être liée dans le Header. Elle se trouve sur une route spécifique.
+
+Login : L'admin utilise un username et un password.
+
+Token : Le token généré au login doit être stocké côté client (localStorage ou Cookies sécurisés) et envoyé dans le Header Authorization: Bearer <token> pour chaque création d'article.

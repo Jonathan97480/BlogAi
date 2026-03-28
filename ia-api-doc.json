@@ -1,0 +1,65 @@
+{
+  "endpoint": "/api/ia/posts",
+  "method": "POST",
+  "headers": {
+    "x-api-key": "<VOTRE_CLE_API>"
+  },
+  "description": "Permet à une IA ou un service externe de publier un article sur le blog.",
+  "fields": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "description": "Titre de l'article."
+    },
+    "excerpt": {
+      "type": "string",
+      "required": false,
+      "description": "Résumé ou introduction de l'article."
+    },
+    "content": {
+      "type": "string",
+      "required": true,
+      "description": "Contenu principal de l'article, au format HTML."
+    },
+    "category_id": {
+      "type": "integer",
+      "required": true,
+      "description": "ID de la catégorie à laquelle appartient l'article."
+    },
+    "media_id": {
+      "type": "integer",
+      "required": false,
+      "description": "ID d'une image déjà uploadée (optionnel)."
+    },
+    "image_url": {
+      "type": "string",
+      "required": false,
+      "description": "URL d'une image externe à intégrer dans l'article (optionnel)."
+    }
+  },
+  "content_format": {
+    "type": "html",
+    "allowed_tags": [
+      "p", "h1", "h2", "h3", "ul", "ol", "li", "strong", "em", "a", "img", "blockquote", "code", "pre", "br"
+    ],
+    "allowed_css": [
+      "color", "font-weight", "font-style", "text-align", "background", "margin", "padding", "border-radius", "width", "height"
+    ],
+    "notes": "Les balises <script> et les styles globaux sont interdits. Les images peuvent être insérées via <img src='URL'>. Les URLs d'images peuvent être internes (media_id) ou externes (image_url)."
+  },
+  "image_upload": {
+    "description": "Pour uploader une image, utiliser l'endpoint /api/media (POST, multipart/form-data) puis utiliser l'ID retourné comme media_id dans la création d'article. Sinon, fournir une URL externe dans image_url.",
+    "endpoint": "/api/media",
+    "method": "POST",
+    "fields": {
+      "file": "Fichier image (jpeg, png, webp, ...)."
+    }
+  },
+  "example_request": {
+    "title": "L'IA révolutionne la médecine",
+    "excerpt": "L'intelligence artificielle bouleverse le secteur médical...",
+    "content": "<h2>Une avancée majeure</h2><p>L'IA permet de diagnostiquer plus vite...</p><img src='https://example.com/image.jpg'>",
+    "category_id": 2,
+    "image_url": "https://example.com/image.jpg"
+  }
+}
