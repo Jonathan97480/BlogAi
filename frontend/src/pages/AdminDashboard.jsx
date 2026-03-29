@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { FaRegEdit, FaRegTrashAlt, FaUndo, FaCheck, FaTimes as FaTimesIcon } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -12,20 +10,83 @@ import PagesAdmin from './PagesAdmin';
 // DEBUG LOGS
 console.log('AdminDashboard chargé');
 
+
+
 function AdminDashboard() {
-    // Mock pour la clé API externe et permissions
+    // --- États globaux (déclarés AVANT tout useEffect qui les utilise) ---
+    const [view, setView] = useState('articles'); // 'articles', 'archives', 'album'
+    const [iaUrl, setIaUrl] = useState('');
+    const [iaKey, setIaKey] = useState('');
+    const [iaModel, setIaModel] = useState('');
+    const [iaPrompt, setIaPrompt] = useState('');
+    const [iaSuccess, setIaSuccess] = useState('');
+    const [iaError, setIaError] = useState('');
     const [apiKey, setApiKey] = useState('sk-demo-1234567890abcdef');
     const [apiPerms, setApiPerms] = useState({ read: true, write: false, ia: false, admin: false });
-
-    // Pour édition catégorie
     const [editCatId, setEditCatId] = useState(null);
     const [editCatName, setEditCatName] = useState('');
-    // Pour la modal catégorie
     const [showCatModal, setShowCatModal] = useState(false);
     const [newCatName, setNewCatName] = useState('');
     const [catSuccess, setCatSuccess] = useState('');
     const [catError, setCatError] = useState('');
     const [categories, setCategories] = useState([]);
+    const [posts, setPosts] = useState([]);
+    const [archived, setArchived] = useState([]);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    // --- États pour les réseaux sociaux ---
+    const [socialLinks, setSocialLinks] = useState({
+        x_twitter_url: '',
+        facebook_url: '',
+        reddit_url: '',
+        instagram_url: '',
+        discord_url: '',
+        youtube_url: '',
+        tiktok_url: ''
+    });
+    const [socialSuccess, setSocialSuccess] = useState('');
+    const [socialError, setSocialError] = useState('');
+
+    // Charger les liens sociaux quand on ouvre l’onglet settings
+    useEffect(() => {
+        if (view === 'settings') {
+            fetch('/api/social/links')
+                .then(res => res.json())
+                .then(data => {
+                    setSocialLinks({
+                        x_twitter_url: data.x_twitter_url || '',
+                        facebook_url: data.facebook_url || '',
+                        reddit_url: data.reddit_url || '',
+                        instagram_url: data.instagram_url || '',
+                        discord_url: data.discord_url || '',
+                        youtube_url: data.youtube_url || '',
+                        tiktok_url: data.tiktok_url || ''
+                    });
+                })
+                .catch(() => setSocialLinks({
+                    x_twitter_url: '', facebook_url: '', reddit_url: '', instagram_url: '', discord_url: '', youtube_url: '', tiktok_url: ''
+                }));
+        }
+    }, [view]);
+
+    // Charger les paramètres IA quand on ouvre l’onglet settings
+    useEffect(() => {
+        if (view === 'settings') {
+            fetch('/api/ia/params')
+                .then(res => res.json())
+                .then(data => {
+                    setIaUrl(data.url_ia || '');
+                    setIaKey(data.key_ia || '');
+                    setIaModel(data.id_IA || '');
+                    // On propose à l’édition uniquement la partie utilisateur (pas le prompt système)
+                    setIaPrompt(data.system_prompt?.replace(/^.*?\n?/, '') || '');
+                })
+                .catch(() => {
+                    setIaUrl(''); setIaKey(''); setIaModel(''); setIaPrompt('');
+                });
+        }
+    }, [view]);
 
     // Charger les catégories à l'ouverture ou après création
     useEffect(() => {
@@ -40,11 +101,6 @@ function AdminDashboard() {
             })
             .catch(() => setCategories([]));
     }, [showCatModal, catSuccess]);
-    const [posts, setPosts] = useState([]);
-    const [archived, setArchived] = useState([]);
-    const [error, setError] = useState('');
-    const [view, setView] = useState('articles'); // 'articles', 'archives', 'album'
-    const navigate = useNavigate();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -436,14 +492,50 @@ function AdminDashboard() {
                             {/* Formulaire ou infos IA ici */}
                             <div className="bg-gray-900 rounded p-4">
                                 <label className="block mb-1 font-semibold">URL IA</label>
-                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="IA_API_URL" disabled />
+                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="IA_API_URL"
+                                    value={iaUrl}
+                                    onChange={e => setIaUrl(e.target.value)}
+                                />
                                 <label className="block mb-1 font-semibold">Clé API IA</label>
-                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white" placeholder="IA_API_KEY" disabled />
+                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white"
+                                    placeholder="IA_API_KEY"
+                                    value={iaKey}
+                                    onChange={e => setIaKey(e.target.value)}
+                                />
                                 <label className="block mb-1 font-semibold mt-2">Modèle IA</label>
-                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="IA_MODEL" disabled />
+                                <input type="text" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="IA_MODEL"
+                                    value={iaModel}
+                                    onChange={e => setIaModel(e.target.value)}
+                                />
                                 <label className="block mb-1 font-semibold mt-2">Prompt IA</label>
-                                <textarea className="w-full p-2 rounded bg-gray-700 text-white" placeholder="IA_PROMPT" rows={3} disabled />
-                                <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow w-full">Sauvegarder</button>
+                                <textarea className="w-full p-2 rounded bg-gray-700 text-white"
+                                    placeholder="IA_PROMPT"
+                                    rows={3}
+                                    value={iaPrompt}
+                                    onChange={e => setIaPrompt(e.target.value)}
+                                />
+                                <button
+                                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow w-full"
+                                    onClick={async () => {
+                                        setIaSuccess(''); setIaError('');
+                                        const res = await fetch('/api/ia/params', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                url_ia: iaUrl,
+                                                key_ia: iaKey,
+                                                id_IA: iaModel,
+                                                pront_ia: iaPrompt
+                                            })
+                                        });
+                                        if (res.ok) setIaSuccess('Paramètres IA sauvegardés !');
+                                        else setIaError('Erreur lors de la sauvegarde');
+                                    }}
+                                >Sauvegarder</button>
+                                {iaSuccess && <div className="text-green-400 mt-2">{iaSuccess}</div>}
+                                {iaError && <div className="text-red-400 mt-2">{iaError}</div>}
                             </div>
                         </section>
 
@@ -452,20 +544,62 @@ function AdminDashboard() {
                             <p className="text-gray-400 mb-2">Renseignez les liens de vos réseaux sociaux pour affichage sur le site.</p>
                             <div className="bg-gray-900 rounded p-4">
                                 <label className="block mb-1 font-semibold">X (ex-Twitter)</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://x.com/votrecompte" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://x.com/votrecompte"
+                                    value={socialLinks.x_twitter_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, x_twitter_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">Facebook</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://facebook.com/votrepage" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://facebook.com/votrepage"
+                                    value={socialLinks.facebook_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, facebook_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">Reddit</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://reddit.com/r/votresubreddit" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://reddit.com/r/votresubreddit"
+                                    value={socialLinks.reddit_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, reddit_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">Instagram</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://instagram.com/votrecompte" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://instagram.com/votrecompte"
+                                    value={socialLinks.instagram_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, instagram_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">Discord</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://discord.gg/votreinvite" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://discord.gg/votreinvite"
+                                    value={socialLinks.discord_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, discord_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">YouTube</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2" placeholder="https://youtube.com/@votrechaine" disabled />
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white mb-2"
+                                    placeholder="https://youtube.com/@votrechaine"
+                                    value={socialLinks.youtube_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, youtube_url: e.target.value }))}
+                                />
                                 <label className="block mb-1 font-semibold">TikTok</label>
-                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white" placeholder="https://tiktok.com/@votrecompte" disabled />
-                                <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow w-full">Sauvegarder</button>
+                                <input type="url" className="w-full p-2 rounded bg-gray-700 text-white"
+                                    placeholder="https://tiktok.com/@votrecompte"
+                                    value={socialLinks.tiktok_url}
+                                    onChange={e => setSocialLinks(l => ({ ...l, tiktok_url: e.target.value }))}
+                                />
+                                <button
+                                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow w-full"
+                                    onClick={async () => {
+                                        setSocialSuccess(''); setSocialError('');
+                                        const res = await fetch('/api/social/links', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(socialLinks)
+                                        });
+                                        if (res.ok) setSocialSuccess('Liens réseaux sociaux sauvegardés !');
+                                        else setSocialError('Erreur lors de la sauvegarde');
+                                    }}
+                                >Sauvegarder</button>
+                                {socialSuccess && <div className="text-green-400 mt-2">{socialSuccess}</div>}
+                                {socialError && <div className="text-red-400 mt-2">{socialError}</div>}
                             </div>
                         </section>
                     </div>

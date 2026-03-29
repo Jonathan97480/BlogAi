@@ -94,6 +94,16 @@ const schemas = [
         for (const sql of schemas) {
             await connection.query(sql);
         }
+        // Ajout d'une clé API de test avec toutes les permissions si pas en production
+        if (process.env.NODE_ENV !== 'production') {
+            const testKey = 'sk-test-allperms';
+            const testPerms = '1111';
+            const [rows] = await connection.query('SELECT * FROM apiKey WHERE api_key = ?', [testKey]);
+            if (rows.length === 0) {
+                await connection.query('INSERT INTO apiKey (api_key, permissions) VALUES (?, ?)', [testKey, testPerms]);
+                console.log('Clé API de test insérée :', testKey, testPerms);
+            }
+        }
         console.log('Base de données initialisée avec succès.');
         await connection.end();
     } catch (err) {
