@@ -1,4 +1,3 @@
-
 import mysql from 'mysql2/promise';
 
 
@@ -56,6 +55,31 @@ const schemas = [
         FOREIGN KEY (page_id) REFERENCES page(id) ON DELETE CASCADE,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
         UNIQUE KEY unique_page_post (page_id, post_id)
+    )`,
+    // Nouvelle table pour stocker les paramètres IA personnalisés
+    `CREATE TABLE IF NOT EXISTS ApiIAText (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        url_ia VARCHAR(255) NOT NULL,
+        key_ia VARCHAR(255) NOT NULL,
+        id_IA VARCHAR(100),
+        pront_ia TEXT
+    )`,
+    // Table pour stocker les liens réseaux sociaux
+    `CREATE TABLE IF NOT EXISTS socialLink (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        x_twitter_url VARCHAR(255) DEFAULT NULL,
+        facebook_url VARCHAR(255) DEFAULT NULL,
+        reddit_url VARCHAR(255) DEFAULT NULL,
+        instagram_url VARCHAR(255) DEFAULT NULL,
+        discord_url VARCHAR(255) DEFAULT NULL,
+        youtube_url VARCHAR(255) DEFAULT NULL,
+        tiktok_url VARCHAR(255) DEFAULT NULL
+    )`,
+    // Table pour stocker les clés API et permissions associées
+    `CREATE TABLE IF NOT EXISTS apiKey (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        api_key VARCHAR(255) NOT NULL UNIQUE,
+        permissions VARCHAR(8) NOT NULL
     )`
 ];
 
