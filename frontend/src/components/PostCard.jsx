@@ -1,5 +1,7 @@
 
 
+
+import styles from './PostCard.module.css';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -13,6 +15,14 @@ function getCategoryColor(category) {
         'DEFAULT': 'bg-gray-500',
     };
     return colors[category?.toUpperCase()] || colors.DEFAULT;
+}
+
+// Fonction utilitaire pour décoder les entités HTML
+function decodeHtmlEntities(str) {
+    if (!str) return '';
+    const txt = document.createElement('textarea');
+    txt.innerHTML = str;
+    return txt.value;
 }
 
 function PostCard({ post }) {
@@ -29,9 +39,9 @@ function PostCard({ post }) {
     };
     return (
         <Link to={`/article/${post.id}`} className="block">
-            <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transition-transform">
+            <div className={`bg-gray-800 rounded-lg shadow-lg hover:scale-105 transition-transform ${styles['post-card']}`}>
                 {imageUrl && (
-                    <img src={imageUrl} alt={post.title} className="w-full h-48 object-cover" />
+                    <img src={imageUrl} alt={post.title} className={styles['post-card-image']} />
                 )}
                 <div className="p-4">
                     {post.category && (
@@ -44,7 +54,11 @@ function PostCard({ post }) {
                         </button>
                     )}
                     <h2 className="text-xl font-bold text-blue-300 mt-2 mb-2">{post.title}</h2>
-                    <p className="text-gray-300 mb-2">{post.excerpt}</p>
+                    <p className={`text-gray-300 mb-2 ${styles['post-card-excerpt']}`}>
+                        {post.excerpt && decodeHtmlEntities(post.excerpt).length > 120
+                            ? decodeHtmlEntities(post.excerpt).slice(0, 120) + '…'
+                            : decodeHtmlEntities(post.excerpt)}
+                    </p>
                     <span className="text-xs text-gray-500">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
             </div>

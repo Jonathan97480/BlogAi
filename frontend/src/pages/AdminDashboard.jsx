@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+// Fonction utilitaire pour décoder les entités HTML
+function decodeHtmlEntities(str) {
+    if (!str) return '';
+    const txt = document.createElement('textarea');
+    txt.innerHTML = str;
+    return txt.value;
+}
+import styles from './AdminDashboard.module.css';
 import { FaRegEdit, FaRegTrashAlt, FaUndo, FaCheck, FaTimes as FaTimesIcon } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ArticleEditor from './ArticleEditor';
@@ -225,7 +233,7 @@ function AdminDashboard() {
                     {error && <div className="text-red-500 mb-4">{error}</div>}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {posts.map(post => (
-                            <div key={`article-${post.id}`} className="bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative">
+                            <div key={`article-${post.id}`} className={`bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition relative ${styles['article-card']}`}>
                                 <div className="mb-2 flex items-start justify-between gap-3">
                                     <h2 className="text-xl font-bold text-blue-300">{post.title}</h2>
                                     <div className="flex gap-2 shrink-0">
@@ -259,7 +267,11 @@ function AdminDashboard() {
                                     {post.page_titre && (
                                         <p className="text-gray-400 mb-2">Page liée : <span className="font-semibold text-blue-400">{post.page_titre}</span></p>
                                     )}
-                                    <p className="text-gray-300 mb-2">{post.excerpt}</p>
+                                    <p className="text-gray-300 mb-2" style={{ fontSize: '1rem', lineHeight: '1.5', maxHeight: '4.5em', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                                        {post.excerpt && decodeHtmlEntities(post.excerpt).length > 120
+                                            ? decodeHtmlEntities(post.excerpt).slice(0, 120) + '…'
+                                            : decodeHtmlEntities(post.excerpt)}
+                                    </p>
                                     <span className="text-xs text-gray-500">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
                                 </div>
                             </div>
