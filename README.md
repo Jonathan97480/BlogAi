@@ -105,5 +105,19 @@ npm test
 - Authentification admin JWT
 - Permissions par clé API
 
+## Protection contre l’indexation des bots (admin)
+
+Le panneau d’administration intègre une balise meta spéciale pour empêcher l’indexation par les moteurs de recherche :
+
+- Dans `frontend/src/pages/AdminDashboard.jsx`, la balise suivante est ajoutée via Helmet :
+
+```jsx
+<Helmet>
+  <meta name="robots" content="noindex, nofollow" />
+</Helmet>
+```
+
+Cela garantit que les pages d’administration ne seront pas référencées ni suivies par les bots ou moteurs de recherche.
+
 ## Auteur
 - Projet initial par [VotreNom]
