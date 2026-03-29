@@ -25,14 +25,16 @@ router.get('/:id/posts', async (req, res) => {
         // et que les articles sont dans la table posts
         // On joint aussi media et categorie pour avoir image et catégorie
         const [rows] = await pool.query(`
-            SELECT p.*, m.url AS media_url, c.name AS category
-            FROM posts p
-            INNER JOIN page_post pp ON pp.post_id = p.id
-            LEFT JOIN media m ON p.media_id = m.id
-            LEFT JOIN categorie c ON p.category_id = c.id
-            WHERE pp.page_id = ?
-            ORDER BY p.id DESC
-        `, [id]);
+                        SELECT p.*, m.url AS media_url, c.name AS category
+                        FROM posts p
+                        INNER JOIN page_post pp ON pp.post_id = p.id
+                        LEFT JOIN media m ON p.media_id = m.id
+                        LEFT JOIN categorie c ON p.category_id = c.id
+                        LEFT JOIN archives a ON a.post_id = p.id
+                        WHERE pp.page_id = ?
+                            AND a.post_id IS NULL
+                        ORDER BY p.id DESC
+                `, [id]);
         res.json(rows);
     } catch (err) {
         res.status(500).json({ message: 'Erreur lors de la récupération des articles liés à la page' });
