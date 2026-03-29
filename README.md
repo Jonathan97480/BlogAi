@@ -86,3 +86,24 @@ npm run dev
 cd backend
 npm test
 ```
+
+## Fonctionnalités principales
+- Gestion des articles, pages, catégories, médias
+- API REST sécurisée par clé API
+- Enrichissement IA configurable (OpenRouter, etc.)
+- Interface admin React (édition IA, réseaux sociaux, etc.)
+- Stockage MySQL
+
+## Configuration IA
+- Les paramètres IA sont éditables depuis l’admin (URL, clé, modèle, prompt)
+- Fusion dynamique entre fichier et base de données
+
+## Réseaux sociaux
+- Les liens sont éditables depuis l’admin et stockés dans la table `socialLink`
+
+## Sécurité
+- Authentification admin JWT
+- Permissions par clé API
+
+## Auteur
+- Projet initial par [VotreNom]
