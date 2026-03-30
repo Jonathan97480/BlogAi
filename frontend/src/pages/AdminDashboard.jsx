@@ -20,7 +20,7 @@ console.log('AdminDashboard chargé');
 
 
 
-import { Helmet } from 'react-helmet'; // Si erreur, remplacer par react-helmet-async
+import { Helmet } from 'react-helmet-async';
 
 function AdminDashboard() {
     // --- États globaux (déclarés AVANT tout useEffect qui les utilise) ---
@@ -104,13 +104,18 @@ function AdminDashboard() {
         fetch('/api/categories', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(res => res.json())
-            .then(data => {
+            .then(async res => {
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    navigate('/hidden-admin-gate');
+                    return;
+                }
+                const data = await res.json();
                 if (Array.isArray(data)) setCategories(data);
                 else setCategories([]);
             })
             .catch(() => setCategories([]));
-    }, [showCatModal, catSuccess]);
+    }, [showCatModal, catSuccess, navigate]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -122,22 +127,28 @@ function AdminDashboard() {
         fetch('/api/posts', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(res => {
+            .then(async res => {
                 if (res.status === 401 || res.status === 403) {
                     localStorage.removeItem('token');
                     navigate('/hidden-admin-gate');
+                    return;
                 }
-                return res.json();
+                const data = await res.json();
+                setPosts(data);
             })
-            .then(data => setPosts(data))
             .catch(() => setError('Erreur lors du chargement des articles'));
 
         // Articles archivés
         fetch('/api/posts/archives', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(res => res.json())
-            .then(data => {
+            .then(async res => {
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    navigate('/hidden-admin-gate');
+                    return;
+                }
+                const data = await res.json();
                 if (Array.isArray(data)) {
                     setArchived(data);
                 } else {

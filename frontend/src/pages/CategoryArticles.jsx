@@ -23,9 +23,9 @@ function CategoryArticles() {
             {loading && <div className="p-6">Chargement...</div>}
             {error && <div className="text-red-500 p-6">{error}</div>}
             {!loading && !error && posts.length === 0 && <div className="p-6">Aucun article trouvé.</div>}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 post-card-grid">
                 {posts.map(post => (
-                    <PostCard key={post.id} post={post} />
+                    <div className="post-card-cell h-full" key={post.id}><PostCard post={post} /></div>
                 ))}
             </div>
         </div>

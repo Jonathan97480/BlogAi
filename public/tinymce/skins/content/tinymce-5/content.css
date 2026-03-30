@@ -1,3 +1,7 @@
+/* Ajout d'une marge inférieure plus grande aux paragraphes pour un meilleur espacement, avec sélecteur plus spécifique */
+.mce-content-body p, .prose p, .article-content p {
+  margin-bottom: 1.5em !important;
+}
 /* This file is bundled with the code from the following third party libraries */
 
 /**

@@ -1,0 +1,54 @@
+.post-card {
+  height: 100%;
+  min-height: 262px;
+  max-height: 262px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.post-card-image {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+
+.post-card-excerpt {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  max-height: 100%;
+  white-space: normal;
+}
+
+/* Fixe la hauteur des conteneurs de cartes d’articles à 262px sur desktop */
+@media (min-width: 1024px) {
+  .post-card-grid {
+    /* On ne fixe plus la hauteur du conteneur, mais celle des cellules */
+  }
+  .post-card-cell {
+    height: 400px;
+    min-height: 400px;
+    max-height: 400px;
+    width: 500px;
+    max-width: 500px;
+    min-width: 500px;
+  }
+  .post-card {
+    min-height: 400px;
+    max-height: 400px;
+    height: 100%;
+    width: 500px;
+    max-width: 500px;
+    min-width: 500px;
+  }
+  .post-card-excerpt {
+    /* Permet au texte d’occuper toute la place disponible, mais coupe avec ... si trop long */
+    display: -webkit-box;
+    -webkit-line-clamp: 8;
+    -webkit-box-orient: vertical;
+    max-height: calc(1.4em * 8);
+  }
+}

@@ -33,9 +33,9 @@ function SearchResults() {
             {loading && <div>Chargement...</div>}
             {error && <div className="text-red-500">{error}</div>}
             {!loading && !error && posts.length === 0 && <div>Aucun article trouvé.</div>}
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 post-card-grid">
                 {posts.map(post => (
-                    <PostCard key={post.id} post={post} />
+                    <div className="post-card-cell h-full" key={post.id}><PostCard post={post} /></div>
                 ))}
             </div>
         </div>

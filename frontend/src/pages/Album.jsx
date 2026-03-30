@@ -1,19 +1,31 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from 'react-icons/fa';
 
 function Album() {
+    const navigate = useNavigate();
     const [images, setImages] = useState([]);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // Récupère la liste des images depuis l'API
         fetch('/api/posts/images', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
-            .then(res => res.json())
-            .then(data => setImages(data))
+            .then(async res => {
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    navigate('/hidden-admin-gate');
+                    return;
+                }
+                const data = await res.json();
+                if (Array.isArray(data)) setImages(data);
+                else {
+                    setImages([]);
+                    setError(data.message || 'Erreur lors du chargement des images');
+                }
+            })
             .catch(() => setError('Erreur lors du chargement des images'));
-    }, []);
+    }, [navigate]);
 
     const handleDelete = async (filename) => {
         if (!window.confirm('Supprimer cette image ?')) return;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
@@ -20,7 +21,7 @@ function App() {
     // Afficher le Header général uniquement sur les pages publiques
     const showHeader = location.pathname !== '/admin-dashboard';
     return (
-        <>
+        <HelmetProvider>
             {showHeader && <Header />}
             {showHeader && <MobileHeader />}
             {showHeader && <RgpdPopup />}
@@ -40,7 +41,7 @@ function App() {
                 </div>
                 {showHeader && <Footer />}
             </div>
-        </>
+        </HelmetProvider>
     );
 }
 

@@ -94,6 +94,24 @@ const schemas = [
         for (const sql of schemas) {
             await connection.query(sql);
         }
+        // Suppression des doublons dans page_post (sécurité migration)
+        try {
+            await connection.query(`
+                DELETE t1 FROM page_post t1
+                INNER JOIN page_post t2
+                WHERE t1.id > t2.id AND t1.page_id = t2.page_id AND t1.post_id = t2.post_id;
+            `);
+        } catch (err) {
+            console.warn('Avertissement : doublons page_post non supprimés', err.message);
+        }
+        // Ajout de la contrainte d'unicité (si absente)
+        try {
+            await connection.query('ALTER TABLE page_post ADD UNIQUE KEY unique_page_post (page_id, post_id)');
+        } catch (err) {
+            if (!err.message.includes('Duplicate key name')) {
+                console.warn('Avertissement : contrainte unique_page_post non ajoutée', err.message);
+            }
+        }
         // Ajout d'une clé API de test avec toutes les permissions si pas en production
         if (process.env.NODE_ENV !== 'production') {
             const testKey = 'sk-test-allperms';

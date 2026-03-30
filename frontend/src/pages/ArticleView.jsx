@@ -24,6 +24,16 @@ function ArticleView() {
             .replace(/src="\/\/img\//g, 'src="/img/');
     }, [article]);
 
+    // Ajout d'une marge inférieure sur tous les <p> du contenu après le rendu
+    useEffect(() => {
+        const container = document.querySelector('.prose, .article-content, .mce-content-body');
+        if (container) {
+            container.querySelectorAll('p').forEach(p => {
+                p.style.marginBottom = '1.5em';
+            });
+        }
+    }, [normalizedContent]);
+
     if (loading) return <div className="p-6">Chargement...</div>;
     if (error || !article) return <div className="p-6 text-red-500">{error || 'Article introuvable.'}</div>;
 
