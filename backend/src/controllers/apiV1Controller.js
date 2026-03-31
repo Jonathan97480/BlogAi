@@ -1,4 +1,5 @@
 import pool from '../models/db.js';
+import { create as createPost } from '../models/postsModel.js';
 
 export async function getArticleByName(req, res) {
     if (!req.apiPerms.read) return res.status(403).json({ message: 'Permission lecture requise' });
@@ -17,19 +18,88 @@ export async function getArticleByID(req, res) {
 
 export async function setArticle(req, res) {
     if (!req.apiPerms.write) return res.status(403).json({ message: 'Permission écriture requise' });
-    const { title, content, category } = req.body;
-    if (!title || !content || !category) return res.status(400).json({ message: 'Champs manquants' });
-    const [result] = await pool.query('INSERT INTO posts (title, content, category) VALUES (?, ?, ?)', [title, content, category]);
-    res.status(201).json({ id: result.insertId });
+    try {
+        const { title, content, category_id, page_id, excerpt, image_url, image_filename } = req.body || {};
+        if (!title || !content || !category_id) {
+            return res.status(400).json({ message: 'Champs obligatoires manquants (title, content, category_id)' });
+        }
+
+        const post = await createPost({
+            title,
+            category_id,
+            excerpt: excerpt || '',
+            content,
+            image_url: image_url || null,
+            image_filename: image_filename || null
+        });
+
+        if (page_id) {
+            await pool.query('INSERT INTO page_post (page_id, post_id) VALUES (?, ?)', [page_id, post.id]);
+        }
+
+        res.status(201).json({
+            id: post.id,
+            title,
+            category_id,
+            page_id: page_id || null,
+            media_id: post.media_id || null
+        });
+    } catch (err) {
+        console.error('[apiV1Controller.setArticle]', err);
+        res.status(500).json({ message: 'Erreur lors de la création de l\'article', error: err.message });
+    }
 }
 
 export async function editArticle(req, res) {
     if (!req.apiPerms.write) return res.status(403).json({ message: 'Permission écriture requise' });
-    const { id } = req.params;
-    const { title, content, category } = req.body;
-    const [result] = await pool.query('UPDATE posts SET title=?, content=?, category=? WHERE id=?', [title, content, category, id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Article non trouvé' });
-    res.json({ id });
+    try {
+        const { id } = req.params;
+        const { title, content, category_id, page_id, excerpt } = req.body || {};
+        if (!title || !content || !category_id) {
+            return res.status(400).json({ message: 'Champs obligatoires manquants (title, content, category_id)' });
+        }
+
+        const [result] = await pool.query(
+            'UPDATE posts SET title = ?, category_id = ?, excerpt = ?, content = ? WHERE id = ?',
+            [title, category_id, excerpt || '', content, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Article non trouvé' });
+        }
+
+        await pool.query('DELETE FROM page_post WHERE post_id = ?', [id]);
+        if (page_id) {
+            await pool.query('INSERT INTO page_post (page_id, post_id) VALUES (?, ?)', [page_id, id]);
+        }
+
+        res.json({ id: Number(id), title, category_id, page_id: page_id || null });
+    } catch (err) {
+        console.error('[apiV1Controller.editArticle]', err);
+        res.status(500).json({ message: 'Erreur lors de la modification de l\'article', error: err.message });
+    }
+}
+
+export async function getPages(req, res) {
+    if (!req.apiPerms.read) return res.status(403).json({ message: 'Permission lecture requise' });
+    try {
+        const [rows] = await pool.query('SELECT id, titre FROM page ORDER BY titre ASC');
+        res.json(rows.map(r => ({ id: r.id, name: r.titre })));
+    } catch (err) {
+        console.error('[apiV1Controller.getPages]', err);
+        res.status(500).json({ message: 'Erreur lors de la récupération des pages', error: err.message });
+    }
+}
+
+export async function getCategories(req, res) {
+    if (!req.apiPerms.read) return res.status(403).json({ message: 'Permission lecture requise' });
+    try {
+        const [rows] = await pool.query('SELECT id, name FROM categorie ORDER BY name ASC');
+        res.json(rows);
+    } catch (err) {
+        console.error('[apiV1Controller.getCategories]', err);
+        res.status(500).json({ message: 'Erreur lors de la récupération des catégories', error: err.message });
+    }
 }
 
 export async function iaOptimiseText(req, res) {

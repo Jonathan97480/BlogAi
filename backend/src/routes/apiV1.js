@@ -10,6 +10,8 @@ import {
     getArticleByID,
     setArticle,
     editArticle,
+    getPages,
+    getCategories,
     iaOptimiseText,
     setAdminUser,
     getAdminUser
@@ -66,6 +68,8 @@ router.get('/getarticlebyName', getArticleByName);
 router.get('/getarticlebyID/:id', getArticleByID);
 router.post('/setArticle', setArticle);
 router.put('/editArticle/:id', editArticle);
+router.get('/pages', getPages);
+router.get('/categories', getCategories);
 router.post('/IaOptimiseText', iaOptimiseText);
 router.post('/setAdminUser', setAdminUser);
 router.get('/getAdminUser/:id', getAdminUser);
@@ -95,7 +99,6 @@ router.post('/uploadImage', upload.single('image'), async (req, res) => {
     }
 });
 
-// --- Gestion des idées via API v1 ---
 router.get('/ideas', async (req, res) => {
     if (!req.apiPerms.read) {
         return res.status(403).json({ message: 'Permission lecture requise' });

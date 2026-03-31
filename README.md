@@ -81,15 +81,85 @@ Routes disponibles :
 - `GET /api/v1/getarticlebyID/:id`
 - `POST /api/v1/setArticle`
 - `PUT /api/v1/editArticle/:id`
+- `GET /api/v1/pages`
+- `GET /api/v1/categories`
 - `POST /api/v1/IaOptimiseText`
 - `POST /api/v1/setAdminUser`
 - `GET /api/v1/getAdminUser/:id`
 - `POST /api/v1/uploadImage`
+- `GET /api/v1/ideas`
+- `GET /api/v1/ideas/:id`
+- `POST /api/v1/ideas`
+- `DELETE /api/v1/ideas/:id`
+- `PATCH /api/v1/ideas/:id/processed`
 
 Notes :
 - La clé API est générée depuis le panneau d’administration, section paramètres.
 - Les permissions sont stockées en base dans la table `apiKey`.
 - Le endpoint documenté précédemment sous `/api/ia/posts` n’est pas exposé par le backend actuel.
+- `setArticle` et `editArticle` utilisent désormais la structure réelle du projet (`posts`, `categorie`, `page_post`).
+
+### Création d'article via API externe
+
+Route : `POST /api/v1/setArticle`
+
+- Auth : header `x-api-key`
+- Permission requise : `write`
+- Format : `application/json`
+- Champs obligatoires : `title`, `content`, `category_id`
+- Champs optionnels : `page_id`, `excerpt`, `image_url`, `image_filename`
+
+Exemple :
+
+```json
+{
+  "title": "TurboQuant : la technologie de Google qui pourrait enfin rendre l’IA moins gourmande en mémoire",
+  "content": "<p>Contenu HTML de l'article</p>",
+  "category_id": 1,
+  "page_id": 1,
+  "excerpt": "Résumé court de l'article",
+  "image_url": "/img/api/mon-image.png",
+  "image_filename": "mon-image.png"
+}
+```
+
+Réponse type :
+
+```json
+{
+  "id": 42,
+  "title": "TurboQuant : la technologie de Google qui pourrait enfin rendre l’IA moins gourmande en mémoire",
+  "category_id": 1,
+  "page_id": 1,
+  "media_id": 12
+}
+```
+
+### Lister les pages disponibles
+
+Route : `GET /api/v1/pages`
+
+Réponse type :
+
+```json
+[
+  { "id": 1, "name": "IA (Intelligence Artificielle)" },
+  { "id": 2, "name": "Actualité" }
+]
+```
+
+### Lister les catégories disponibles
+
+Route : `GET /api/v1/categories`
+
+Réponse type :
+
+```json
+[
+  { "id": 1, "name": "Ai" },
+  { "id": 2, "name": "News" }
+]
+```
 
 ### Upload d'image via API externe
 
