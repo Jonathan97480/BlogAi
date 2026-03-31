@@ -37,6 +37,16 @@ node createAdmin.js admin azerty
 - `GET /api/posts` : Liste des articles
 - `POST /api/posts` : Création d'article (protégé JWT)
 
+### Endpoints API v1 (clé API requise via `x-api-key`)
+
+| Méthode | URL | Description | Permission(s) requise(s) |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/ideas` | Récupérer toutes les idées | `read` |
+| `GET` | `/api/v1/ideas/:id` | Récupérer une idée précise | `read` |
+| `POST` | `/api/v1/ideas` | Créer une nouvelle idée (`title`, `category_id`, `content` requis) | `write` |
+| `DELETE` | `/api/v1/ideas/:id` | Supprimer une idée | `write` ou `admin` |
+| `PATCH` | `/api/v1/ideas/:id/processed` | Marquer une idée comme traitée | `write` ou `admin` |
+
 ---
 
 **Note :** L'URL d'administration cachée s'affiche dans les logs au démarrage du backend.
