@@ -1,6 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import 'tinymce/tinymce';
 import 'tinymce/icons/default';
@@ -24,51 +22,28 @@ import 'tinymce/plugins/table';
 import 'tinymce/plugins/wordcount';
 import 'tinymce/skins/ui/oxide/skin.min.css';
 import 'tinymce/skins/content/default/content.min.css';
+import { FaTimes } from 'react-icons/fa';
 
-function ArticleEditor({ article, onArticleSaved, onClose }) {
-    const [title, setTitle] = useState(article?.title || '');
-    const [categoryId, setCategoryId] = useState(article?.category_id || '');
+function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
+    const [title, setTitle] = useState(idea?.title || '');
+    const [categoryId, setCategoryId] = useState(idea?.category_id || '');
     const [categories, setCategories] = useState([]);
     const [showCatModal, setShowCatModal] = useState(false);
     const [newCatName, setNewCatName] = useState('');
-    const [content, setContent] = useState(article?.content || '');
-    const [image, setImage] = useState(null);
+    const [content, setContent] = useState(idea?.content || '');
+    const [mediaId, setMediaId] = useState(idea?.media_id || '');
+    const [mediaFile, setMediaFile] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [pages, setPages] = useState([]);
 
-    // Récupère les pages à l'ouverture
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        fetch('/api/pages', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) {
-                    setPages(data);
-                } else {
-                    setPages([]);
-                }
-            })
-            .catch(() => setPages([]));
-    }, [success]);
-    useEffect(() => {
-        console.log('[ArticleEditor] MONTAGE');
-        return () => console.log('[ArticleEditor] DEMONTAGE');
-    }, []);
-    const [pageId, setPageId] = useState('');
+        setTitle(idea?.title || '');
+        setCategoryId(idea?.category_id || '');
+        setContent(idea?.content || '');
+        setMediaId(idea?.media_id || '');
+    }, [idea]);
 
-    // Met à jour les champs si on change d'article à éditer
-    useEffect(() => {
-        setTitle(article?.title || '');
-        setCategoryId(article?.category_id || '');
-        setContent(article?.content || '');
-        setImage(null);
-        setPageId(article?.page_id || '');
-    }, [article]);
-
-    // Récupère les catégories et pages à l'ouverture
+    // Récupère les catégories à l'ouverture ou après création
     useEffect(() => {
         const token = localStorage.getItem('token');
         fetch('/api/categories', {
@@ -85,10 +60,6 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
             .catch(() => setCategories([]));
     }, [showCatModal, success]);
 
-    const handleImageChange = (e) => {
-        setImage(e.target.files[0]);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -97,56 +68,55 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
             setError('Tous les champs sont obligatoires.');
             return;
         }
-        // Suppression de useSingletonMount inutile
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('category_id', categoryId);
-        formData.append('content', content);
-        if (pageId) formData.append('page_id', pageId);
-        if (image) formData.append('image', image);
         const token = localStorage.getItem('token');
-        let url = '/api/posts';
-        let method = 'POST';
-        if (article && article.id) {
-            url = `/api/posts/${article.id}`;
-            method = 'PUT';
+        let mediaIdToSend = mediaId;
+        // Si un nouveau fichier image est sélectionné, on l'upload d'abord
+        if (mediaFile) {
+            const formData = new FormData();
+            formData.append('image', mediaFile);
+            const uploadRes = await fetch('/api/upload/quill', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadRes.ok && uploadData.media_id) {
+                mediaIdToSend = uploadData.media_id;
+            } else {
+                setError(uploadData.message || 'Erreur lors de l’upload de l’image.');
+                return;
+            }
         }
+        const method = idea && idea.id ? 'PUT' : 'POST';
+        const url = idea && idea.id ? `/api/idea/${idea.id}` : '/api/idea';
         const res = await fetch(url, {
             method,
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title, category_id: categoryId, content, media_id: mediaIdToSend })
         });
         const data = await res.json();
         if (res.ok) {
-            setSuccess(article && article.id ? 'Article modifié !' : 'Article publié !');
-            setTitle(''); setCategoryId(''); setContent(''); setImage(null); setPageId('');
-            if (onArticleSaved) onArticleSaved();
+            setSuccess('Idée sauvegardée !');
+            if (onIdeaSaved) onIdeaSaved();
         } else {
-            setError(data.message || 'Erreur lors de la publication.');
+            setError(data.message || 'Erreur lors de la sauvegarde.');
         }
     };
 
-    // Désactive le bouton si un champ requis est manquant
-    const isDisabled = !title || !categoryId || !pageId || (!image && !(article && article.media_url));
-
-
-    // Log de montage du composant (optionnel)
-    useEffect(() => {
-        console.log('[ArticleEditor] Composant monté');
-    }, []);
-
-
+    const isDisabled = !title || !categoryId || !content;
 
     return (
         <div className="relative bg-gray-800 p-6 rounded shadow mb-8 mx-auto">
-            {/* Bouton fermeture */}
             <button
                 type="button"
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl"
                 title="Fermer l'éditeur"
                 onClick={() => {
                     if (window.confirm('Voulez-vous vraiment fermer l’éditeur ? Les modifications non sauvegardées seront perdues.')) {
-                        setTitle(''); setCategoryId(''); setContent(''); setImage(null);
+                        setTitle(''); setCategory(''); setExcerpt(''); setContent(''); setMediaId('');
                         if (onClose) onClose();
                     }
                 }}
@@ -154,7 +124,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                 <FaTimes />
             </button>
             <form onSubmit={handleSubmit}>
-                <h2 className="text-xl font-bold mb-4">Nouvel article</h2>
+                <h2 className="text-xl font-bold mb-4">Nouvelle idée d'article</h2>
                 {error && <div className="text-red-500 mb-2">{error}</div>}
                 {success && <div className="text-green-500 mb-2">{success}</div>}
                 <label className="block mb-1 font-semibold">Titre <span className="text-red-500">*</span></label>
@@ -171,15 +141,35 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         ))}
                     </select>
                 </div>
-                <div className="mb-3">
-                    <label className="font-semibold">Page liée <span className="text-red-500">*</span></label>
-                    <select value={pageId} onChange={e => setPageId(e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white">
-                        <option value="">-- Sélectionner une page --</option>
-                        {pages.map(page => (
-                            <option key={page.id} value={page.id}>{page.titre}</option>
-                        ))}
-                    </select>
-                </div>
+                {showCatModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-sm relative">
+                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xl" onClick={() => setShowCatModal(false)}><FaTimes /></button>
+                            <h3 className="text-lg font-bold mb-4">Créer une catégorie</h3>
+                            <input type="text" placeholder="Nom de la catégorie" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="w-full mb-3 p-2 rounded bg-gray-700 text-white" />
+                            <button
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded"
+                                onClick={async () => {
+                                    if (!newCatName.trim()) return;
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch('/api/categories', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ name: newCatName })
+                                    });
+                                    if (res.ok) {
+                                        setShowCatModal(false);
+                                        setNewCatName('');
+                                    }
+                                }}
+                            >Créer</button>
+                        </div>
+                    </div>
+                )}
+                <label className="block mb-1 font-semibold">Contenu <span className="text-red-500">*</span></label>
                 <Editor
                     value={content}
                     init={{
@@ -225,8 +215,8 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                     onEditorChange={setContent}
                 />
                 <div className="mb-3">
-                    <label className="block mb-1 font-semibold" htmlFor="cover-image">Image de couverture <span className="text-red-500">*</span></label>
-                    <input id="cover-image" type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-white bg-gray-700 rounded p-2" />
+                    <label className="block mb-1 font-semibold" htmlFor="cover-image">Image de couverture</label>
+                    <input id="cover-image" type="file" accept="image/*" onChange={e => setMediaFile(e.target.files[0])} className="block w-full text-white bg-gray-700 rounded p-2" />
                 </div>
                 <div className="flex gap-2">
                     <button
@@ -234,70 +224,21 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         className={`flex-1 font-bold py-2 rounded ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                         disabled={isDisabled}
                     >
-                        Publier
+                        Sauvegarder
                     </button>
                     <button
                         type="button"
                         className="flex-1 font-bold py-2 rounded bg-green-600 hover:bg-green-700 text-white"
-                        onClick={async () => {
-                            if (!content) return alert('Le contenu est vide !');
-                            try {
-                                const res = await fetch('/api/ia/enrich', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ content })
-                                });
-                                const data = await res.json();
-                                if (res.ok && data.enriched) {
-                                    setContent(data.enriched);
-                                } else {
-                                    alert(data.message || 'Erreur lors de l’enrichissement IA');
-                                }
-                            } catch (err) {
-                                alert('Erreur réseau ou serveur IA : ' + err.message);
-                            }
-                        }}
+                        onClick={() => onMarkProcessed && onMarkProcessed(idea?.id)}
+                        disabled={!idea?.id}
                     >
-                        Enrichir par IA
+                        Marquer comme traitée
                     </button>
                 </div>
             </form>
-            {/* Modal création catégorie */}
-            {showCatModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-sm relative">
-                        <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xl" onClick={() => setShowCatModal(false)}><FaTimes /></button>
-                        <h3 className="text-lg font-bold mb-4">Créer une catégorie</h3>
-                        <input type="text" placeholder="Nom de la catégorie" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="w-full mb-3 p-2 rounded bg-gray-700 text-white" />
-                        <button
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded"
-                            onClick={async () => {
-                                if (!newCatName.trim()) return;
-                                const token = localStorage.getItem('token');
-                                const res = await fetch('/api/categories', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ name: newCatName })
-                                });
-                                if (res.ok) {
-                                    setShowCatModal(false);
-                                    setNewCatName('');
-                                    // Optionnel : recharger la liste des catégories (fait via useEffect)
-                                }
-                            }}
-                        >Créer</button>
-                    </div>
-                </div>
-            )}
         </div>
     );
+
 }
 
-function Wrapper(props) {
-    useEffect(() => () => { window.__ARTICLE_EDITOR_MOUNTED = false; }, []);
-    return <ArticleEditor {...props} />;
-}
-export default Wrapper;
+export default IdeaEditor;

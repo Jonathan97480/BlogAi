@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaArchive, FaTrash, FaUndo } from "react-icons/fa";
 import ArticleEditor from "./ArticleEditor";
+import IdeaEditor from "./IdeaEditor";
 import PagesAdmin from "./PagesAdmin";
 import Album from "./Album";
 import { Helmet } from "react-helmet-async";
@@ -228,6 +229,7 @@ function AdminDashboard() {
           <nav className="flex flex-col gap-4">
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "articles" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("articles")}>Articles</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "pages" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("pages")}>Pages</button>
+            <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "ideas" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("ideas")}>Idée d'article</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "settings" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("settings")}>Paramètres</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "archives" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("archives")}>Archivage</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "album" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("album")}>Album</button>
@@ -259,6 +261,34 @@ function AdminDashboard() {
           )}
 
           {view === "pages" && <PagesAdmin />}
+          {view === "ideas" && (
+            <div>
+              <h1 className="text-3xl font-bold mb-6">Idée d'article</h1>
+              <button
+                className="mb-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow"
+                onClick={() => { setEditArticle(null); setShowEditor(true); }}
+                style={{ display: showEditor ? "none" : "inline-block" }}
+              >
+                Créer un article
+              </button>
+              {showEditor && (
+                <IdeaEditor
+                  idea={editArticle}
+                  onIdeaSaved={() => { setShowEditor(false); setEditArticle(null); }}
+                  onClose={() => { setShowEditor(false); setEditArticle(null); }}
+                  onMarkProcessed={async (id) => {
+                    const token = localStorage.getItem('token');
+                    await fetch(`/api/idea/${id}/processed`, {
+                      method: 'PATCH',
+                      headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    setShowEditor(false); setEditArticle(null);
+                  }}
+                />
+              )}
+              {/* Section vide pour l'instant */}
+            </div>
+          )}
           {view === "album" && <Album />}
 
           {view === "archives" && (
