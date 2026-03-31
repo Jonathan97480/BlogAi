@@ -10,18 +10,18 @@ export async function getIdeaById(id) {
     return rows[0];
 }
 
-export async function createIdea({ title, category, excerpt, content, media_id }) {
+export async function createIdea({ title, category_id, excerpt, content, media_id }) {
     const [result] = await pool.query(
-        'INSERT INTO idea (title, category, excerpt, content, media_id) VALUES (?, ?, ?, ?, ?)',
-        [title, category, excerpt, content, media_id]
+        'INSERT INTO idea (title, category_id, excerpt, content, media_id) VALUES (?, ?, ?, ?, ?)',
+        [title, category_id, excerpt, content, media_id]
     );
     return { id: result.insertId };
 }
 
-export async function updateIdea(id, { title, category, excerpt, content, media_id }) {
+export async function updateIdea(id, { title, category_id, excerpt, content, media_id }) {
     await pool.query(
-        'UPDATE idea SET title = ?, category = ?, excerpt = ?, content = ?, media_id = ? WHERE id = ?',
-        [title, category, excerpt, content, media_id, id]
+        'UPDATE idea SET title = ?, category_id = ?, excerpt = ?, content = ?, media_id = ? WHERE id = ?',
+        [title, category_id, excerpt, content, media_id, id]
     );
 }
 

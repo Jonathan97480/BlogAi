@@ -1,4 +1,8 @@
+
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import pool from '../models/db.js';
 import {
     getAllIdeas,
     getIdeaById,
@@ -9,6 +13,21 @@ import {
 } from '../models/ideaModel.js';
 
 const router = express.Router();
+
+// Multer config pour upload image d'idée
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.resolve('public/img'));
+    },
+    filename: function (req, file, cb) {
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+        const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const ext = path.extname(file.originalname);
+        cb(null, `${dateStr}-idea${ext}`);
+    }
+});
+const upload = multer({ storage });
 
 // GET toutes les idées
 router.get('/', async (req, res) => {
@@ -23,19 +42,57 @@ router.get('/:id', async (req, res) => {
     res.json(idea);
 });
 
-// POST créer une idée
-router.post('/', async (req, res) => {
-    const { title, category, excerpt, content, media_id } = req.body;
-    if (!title || !category || !content) return res.status(400).json({ message: 'Champs obligatoires manquants' });
-    const result = await createIdea({ title, category, excerpt, content, media_id });
-    res.status(201).json(result);
+// POST créer une idée (support FormData + image)
+router.post('/', upload.single('image'), async (req, res) => {
+    try {
+        let image_url = null;
+        let image_filename = null;
+        let media_id = null;
+        if (req.file) {
+            image_filename = req.file.filename;
+            image_url = `/img/${image_filename}`;
+            // Insère dans media
+            const [mediaRes] = await pool.query(
+                'INSERT INTO media (filename, url) VALUES (?, ?)',
+                [image_filename, image_url]
+            );
+            media_id = mediaRes.insertId;
+        } else if (req.body.media_id) {
+            media_id = req.body.media_id;
+        }
+        const { title, category_id, excerpt, content } = req.body;
+        if (!title || !category_id || !content) return res.status(400).json({ message: 'Champs obligatoires manquants' });
+        const result = await createIdea({ title, category_id, excerpt, content, media_id });
+        res.status(201).json(result);
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur lors de la création de l\'idée', error: err.message });
+    }
 });
 
-// PUT éditer une idée
-router.put('/:id', async (req, res) => {
-    const { title, category, excerpt, content, media_id } = req.body;
-    await updateIdea(req.params.id, { title, category, excerpt, content, media_id });
-    res.json({ message: 'Idée mise à jour' });
+// PUT éditer une idée (support FormData + image)
+router.put('/:id', upload.single('image'), async (req, res) => {
+    try {
+        let image_url = null;
+        let image_filename = null;
+        let media_id = null;
+        if (req.file) {
+            image_filename = req.file.filename;
+            image_url = `/img/${image_filename}`;
+            // Insère dans media
+            const [mediaRes] = await pool.query(
+                'INSERT INTO media (filename, url) VALUES (?, ?)',
+                [image_filename, image_url]
+            );
+            media_id = mediaRes.insertId;
+        } else if (req.body.media_id) {
+            media_id = req.body.media_id;
+        }
+        const { title, category_id, excerpt, content } = req.body;
+        await updateIdea(req.params.id, { title, category_id, excerpt, content, media_id });
+        res.json({ message: 'Idée mise à jour' });
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur lors de la modification de l\'idée', error: err.message });
+    }
 });
 
 // DELETE supprimer une idée

@@ -46,12 +46,13 @@ const schemas = [
     `CREATE TABLE IF NOT EXISTS idea (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        category VARCHAR(100) NOT NULL,
+        category_id INT NOT NULL,
         excerpt TEXT,
         content TEXT NOT NULL,
         media_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_processed BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (category_id) REFERENCES categorie(id) ON DELETE CASCADE,
         FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE SET NULL
     )`,
     `CREATE TABLE IF NOT EXISTS archives (

@@ -25,22 +25,29 @@ import 'tinymce/skins/content/default/content.min.css';
 import { FaTimes } from 'react-icons/fa';
 
 function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
-    const [title, setTitle] = useState(idea?.title || '');
-    const [categoryId, setCategoryId] = useState(idea?.category_id || '');
+    const [title, setTitle] = useState(idea && idea.id ? idea.title : '');
+    const [categoryId, setCategoryId] = useState(idea && idea.id ? idea.category_id : '');
     const [categories, setCategories] = useState([]);
     const [showCatModal, setShowCatModal] = useState(false);
     const [newCatName, setNewCatName] = useState('');
-    const [content, setContent] = useState(idea?.content || '');
-    const [mediaId, setMediaId] = useState(idea?.media_id || '');
+    const [content, setContent] = useState(idea && idea.id ? idea.content : '');
+    const [mediaId, setMediaId] = useState(idea && idea.id ? idea.media_id : '');
     const [mediaFile, setMediaFile] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        setTitle(idea?.title || '');
-        setCategoryId(idea?.category_id || '');
-        setContent(idea?.content || '');
-        setMediaId(idea?.media_id || '');
+        if (idea && idea.id) {
+            setTitle(idea.title || '');
+            setCategoryId(idea.category_id || '');
+            setContent(idea.content || '');
+            setMediaId(idea.media_id || '');
+        } else {
+            setTitle('');
+            setCategoryId('');
+            setContent('');
+            setMediaId('');
+        }
     }, [idea]);
 
     // Récupère les catégories à l'ouverture ou après création
@@ -69,33 +76,18 @@ function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
             return;
         }
         const token = localStorage.getItem('token');
-        let mediaIdToSend = mediaId;
-        // Si un nouveau fichier image est sélectionné, on l'upload d'abord
-        if (mediaFile) {
-            const formData = new FormData();
-            formData.append('image', mediaFile);
-            const uploadRes = await fetch('/api/upload/quill', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            const uploadData = await uploadRes.json();
-            if (uploadRes.ok && uploadData.media_id) {
-                mediaIdToSend = uploadData.media_id;
-            } else {
-                setError(uploadData.message || 'Erreur lors de l’upload de l’image.');
-                return;
-            }
-        }
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('category_id', categoryId);
+        formData.append('content', content);
+        if (mediaFile) formData.append('image', mediaFile);
+        if (mediaId && !mediaFile) formData.append('media_id', mediaId);
         const method = idea && idea.id ? 'PUT' : 'POST';
         const url = idea && idea.id ? `/api/idea/${idea.id}` : '/api/idea';
         const res = await fetch(url, {
             method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title, category_id: categoryId, content, media_id: mediaIdToSend })
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
         });
         const data = await res.json();
         if (res.ok) {
@@ -106,7 +98,8 @@ function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
         }
     };
 
-    const isDisabled = !title || !categoryId || !content;
+    const isSaveDisabled = !title || !categoryId || !content;
+    const isMarkProcessedDisabled = !(idea && idea.id);
 
     return (
         <div className="relative bg-gray-800 p-6 rounded shadow mb-8 mx-auto">
@@ -116,7 +109,7 @@ function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
                 title="Fermer l'éditeur"
                 onClick={() => {
                     if (window.confirm('Voulez-vous vraiment fermer l’éditeur ? Les modifications non sauvegardées seront perdues.')) {
-                        setTitle(''); setCategory(''); setExcerpt(''); setContent(''); setMediaId('');
+                        setTitle(''); setCategoryId(''); setContent(''); setMediaId('');
                         if (onClose) onClose();
                     }
                 }}
@@ -221,16 +214,36 @@ function IdeaEditor({ idea, onIdeaSaved, onClose, onMarkProcessed }) {
                 <div className="flex gap-2">
                     <button
                         type="submit"
-                        className={`flex-1 font-bold py-2 rounded ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                        disabled={isDisabled}
+                        className={`flex-1 font-bold py-2 rounded ${isSaveDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                        disabled={isSaveDisabled}
                     >
                         Sauvegarder
                     </button>
                     <button
                         type="button"
-                        className="flex-1 font-bold py-2 rounded bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => onMarkProcessed && onMarkProcessed(idea?.id)}
-                        disabled={!idea?.id}
+                        className={`flex-1 font-bold py-2 rounded ${isMarkProcessedDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                        onClick={async () => {
+                            if (!idea?.id) return;
+                            setError('');
+                            setSuccess('');
+                            try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`/api/idea/${idea.id}/processed`, {
+                                    method: 'PATCH',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                    setSuccess('Idée marquée comme traitée !');
+                                    if (onMarkProcessed) onMarkProcessed(idea.id);
+                                } else {
+                                    const data = await res.json();
+                                    setError(data.message || 'Erreur lors du marquage.');
+                                }
+                            } catch (err) {
+                                setError('Erreur réseau ou serveur.');
+                            }
+                        }}
+                        disabled={isMarkProcessedDisabled}
                     >
                         Marquer comme traitée
                     </button>

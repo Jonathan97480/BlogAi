@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEdit, FaArchive, FaTrash, FaUndo } from "react-icons/fa";
+import { FaEdit, FaArchive, FaTrash, FaUndo, FaCheckCircle } from "react-icons/fa";
 import ArticleEditor from "./ArticleEditor";
 import IdeaEditor from "./IdeaEditor";
 import PagesAdmin from "./PagesAdmin";
@@ -13,8 +13,14 @@ function AdminDashboard() {
   const [posts, setPosts] = useState([]);
   const [archived, setArchived] = useState([]);
   const [error, setError] = useState("");
-  const [showEditor, setShowEditor] = useState(false);
+  const [showArticleEditor, setShowArticleEditor] = useState(false);
+  const [showIdeaEditor, setShowIdeaEditor] = useState(false);
   const [editArticle, setEditArticle] = useState(null);
+  const [editIdea, setEditIdea] = useState(null);
+  const [ideas, setIdeas] = useState([]);
+  const [ideaLoading, setIdeaLoading] = useState(false);
+  const [ideaError, setIdeaError] = useState("");
+  const [ideaCategories, setIdeaCategories] = useState({});
 
   const [iaUrl, setIaUrl] = useState("");
   const [iaKey, setIaKey] = useState("");
@@ -124,9 +130,69 @@ function AdminDashboard() {
     setArchived(Array.isArray(archivedData) ? archivedData : []);
   };
 
+  const loadIdeaCategories = useCallback(async () => {
+    try {
+      const authToken = localStorage.getItem("token");
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+      const res = await fetch("/api/categories", { headers });
+      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const map = data.reduce((acc, cat) => {
+          acc[cat.id] = cat.name;
+          return acc;
+        }, {});
+        setIdeaCategories(map);
+      }
+    } catch (err) {
+      // On conserve simplement la dernière version connue
+    }
+  }, []);
+
+  const loadIdeas = useCallback(async () => {
+    setIdeaLoading(true);
+    setIdeaError("");
+    try {
+      const authToken = localStorage.getItem("token");
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+      const res = await fetch("/api/idea", { headers });
+      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      setIdeas(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setIdeaError("Erreur lors du chargement des idées.");
+    } finally {
+      setIdeaLoading(false);
+    }
+  }, []);
+
+  const handleEditIdea = (idea) => {
+    setEditIdea(idea);
+    setShowIdeaEditor(true);
+  };
+
+  const handleCardMarkProcessed = useCallback(async (ideaId) => {
+    if (!ideaId) return;
+    if (!window.confirm("Marquer cette idée comme traitée ?")) return;
+    try {
+      const authToken = localStorage.getItem("token");
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+      const res = await fetch(`/api/idea/${ideaId}/processed`, {
+        method: "PATCH",
+        headers,
+      });
+      if (!res.ok) throw new Error("failed");
+      await loadIdeas();
+    } catch (err) {
+      setIdeaError("Impossible de marquer l'idée comme traitée pour le moment.");
+    }
+  }, [loadIdeas]);
+
+  const getCategoryLabel = (categoryId) => ideaCategories[categoryId] || `Catégorie #${categoryId}`;
+
   const handleEditPost = (post) => {
     setEditArticle(post);
-    setShowEditor(true);
+    setShowArticleEditor(true);
   };
 
   const handleArchivePost = async (postId) => {
@@ -218,6 +284,59 @@ function AdminDashboard() {
     </div>
   );
 
+  const IdeaCard = ({ idea, categoryLabel, onEdit, onMarkProcessed }) => {
+    const stripHtml = (text = "") => text.replace(/<[^>]+>/g, "");
+    const previewSource = idea.excerpt || stripHtml(idea.content || "");
+    const preview = previewSource.length > 200 ? `${previewSource.slice(0, 200)}…` : previewSource;
+    const statusClasses = idea.is_processed ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-200";
+    return (
+      <div className="bg-gray-800 rounded-lg p-4 shadow flex flex-col border border-gray-700 h-full">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Idée #{idea.id}</p>
+            <h2 className="text-xl font-bold text-purple-300">{idea.title}</h2>
+          </div>
+          <span className={`px-2 py-1 text-xs font-semibold rounded ${statusClasses}`}>
+            {idea.is_processed ? "Traitée" : "À traiter"}
+          </span>
+        </div>
+        <p className="text-sm text-gray-400 mb-2">Catégorie : {categoryLabel}</p>
+        {preview && <p className="text-gray-300 mb-4 flex-1">{preview}</p>}
+        {idea.created_at && (
+          <span className="text-xs text-gray-500 mb-4">
+            Créée le {new Date(idea.created_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
+          </span>
+        )}
+        <div className="mt-auto flex gap-2 flex-col sm:flex-row">
+          <button
+            className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-3 rounded flex items-center justify-center gap-2"
+            onClick={() => onEdit && onEdit()}
+            type="button"
+          >
+            <FaEdit /> Éditer
+          </button>
+          <button
+            className={`flex-1 font-semibold py-2 px-3 rounded flex items-center justify-center gap-2 ${
+              idea.is_processed ? "bg-gray-600 cursor-not-allowed text-gray-300" : "bg-green-600 hover:bg-green-700 text-white"
+            }`}
+            onClick={() => !idea.is_processed && onMarkProcessed && onMarkProcessed()}
+            disabled={idea.is_processed}
+            type="button"
+          >
+            <FaCheckCircle />
+            {idea.is_processed ? "Déjà traitée" : "Marquer traitée"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    if (view !== "ideas") return;
+    loadIdeas();
+    loadIdeaCategories();
+  }, [view, loadIdeas, loadIdeaCategories]);
+
   return (
     <>
       <Helmet>
@@ -241,14 +360,14 @@ function AdminDashboard() {
           {view === "articles" && (
             <>
               <h1 className="text-3xl font-bold mb-6">Articles</h1>
-              <button className="mb-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow" onClick={() => { setEditArticle(null); setShowEditor(true); }} style={{ display: showEditor ? "none" : "inline-block" }}>
+              <button className="mb-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow" onClick={() => { setEditArticle(null); setShowArticleEditor(true); }} style={{ display: showArticleEditor ? "none" : "inline-block" }}>
                 Créer un article
               </button>
-              {showEditor && (
+              {showArticleEditor && (
                 <ArticleEditor
                   article={editArticle}
-                  onArticleSaved={() => { reloadPosts(); setShowEditor(false); setEditArticle(null); }}
-                  onClose={() => { setShowEditor(false); setEditArticle(null); }}
+                  onArticleSaved={() => { reloadPosts(); setShowArticleEditor(false); setEditArticle(null); }}
+                  onClose={() => { setShowArticleEditor(false); setEditArticle(null); }}
                 />
               )}
               {error && <div className="text-red-500 mb-4">{error}</div>}
@@ -266,27 +385,54 @@ function AdminDashboard() {
               <h1 className="text-3xl font-bold mb-6">Idée d'article</h1>
               <button
                 className="mb-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow"
-                onClick={() => { setEditArticle(null); setShowEditor(true); }}
-                style={{ display: showEditor ? "none" : "inline-block" }}
+                onClick={() => { setEditIdea(null); setShowIdeaEditor(true); }}
+                style={{ display: showIdeaEditor ? "none" : "inline-block" }}
               >
-                Créer un article
+                Inspire-toi de la sélection d'articles
               </button>
-              {showEditor && (
+              {showIdeaEditor && (
                 <IdeaEditor
-                  idea={editArticle}
-                  onIdeaSaved={() => { setShowEditor(false); setEditArticle(null); }}
-                  onClose={() => { setShowEditor(false); setEditArticle(null); }}
-                  onMarkProcessed={async (id) => {
-                    const token = localStorage.getItem('token');
-                    await fetch(`/api/idea/${id}/processed`, {
-                      method: 'PATCH',
-                      headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    setShowEditor(false); setEditArticle(null);
+                  idea={editIdea}
+                  onIdeaSaved={async () => { await loadIdeas(); setShowIdeaEditor(false); setEditIdea(null); }}
+                  onClose={() => { setShowIdeaEditor(false); setEditIdea(null); }}
+                  onMarkProcessed={async () => {
+                    await loadIdeas();
+                    setShowIdeaEditor(false);
+                    setEditIdea(null);
                   }}
                 />
               )}
-              {/* Section vide pour l'instant */}
+              <section className="bg-gray-900/30 border border-gray-800 rounded-lg p-4">
+                <div className="flex flex-wrap items-center gap-3 mb-4 justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold">Idées déjà créées</h2>
+                    <p className="text-gray-400 text-sm">Toutes les inspirations collectées apparaissent ci-dessous.</p>
+                  </div>
+                  <button
+                    className="text-sm text-blue-400 hover:text-blue-300 underline"
+                    onClick={loadIdeas}
+                    type="button"
+                  >
+                    Rafraîchir la liste
+                  </button>
+                </div>
+                {ideaError && <div className="text-red-400 mb-4">{ideaError}</div>}
+                {ideaLoading && <p className="text-gray-400">Chargement des idées...</p>}
+                {!ideaLoading && ideas.length === 0 && (
+                  <p className="text-gray-500">Aucune idée enregistrée pour l'instant.</p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {ideas.map((idea) => (
+                    <IdeaCard
+                      key={idea.id}
+                      idea={idea}
+                      categoryLabel={getCategoryLabel(idea.category_id)}
+                      onEdit={() => handleEditIdea(idea)}
+                      onMarkProcessed={() => handleCardMarkProcessed(idea.id)}
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
           )}
           {view === "album" && <Album />}

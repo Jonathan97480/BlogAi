@@ -1,9 +1,11 @@
 // ...existing code...
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
 import { updatePost, getPostsByCategory, getAllPosts, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController } from '../controllers/postsController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
-import multer from 'multer';
-import path from 'path';
+import pool from '../models/db.js';
 
 const router = express.Router();
 
@@ -111,13 +113,20 @@ router.get('/images', (req, res, next) => {
 });
 
 // Route pour supprimer une image
-router.delete('/images/:filename', verifyJWT, (req, res) => {
+router.delete('/images/:filename', verifyJWT, async (req, res) => {
+    const filename = req.params.filename;
     const imgDir = path.resolve('public/img');
-    const filePath = path.join(imgDir, req.params.filename);
-    fs.unlink(filePath, err => {
-        if (err) return res.status(500).json({ message: 'Erreur suppression image' });
+    const filePath = path.join(imgDir, filename);
+    try {
+        await fs.promises.unlink(filePath).catch(err => {
+            if (err.code !== 'ENOENT') throw err;
+        });
+        await pool.query('DELETE FROM media WHERE filename = ?', [filename]);
         res.sendStatus(204);
-    });
+    } catch (err) {
+        console.error('[DELETE /api/posts/images]', err.message);
+        res.status(500).json({ message: 'Erreur suppression image' });
+    }
 });
 
 // Route pour créer un article (avec upload image)
@@ -143,18 +152,3 @@ router.get('/:id', getPostById);
 router.post('/:id/archive', verifyJWT, archivePost);
 
 export default router;
-
-// --- ROUTES IMAGES ---
-import pool from '../models/db.js';
-// Route pour lister toutes les images depuis la table media
-// (supprimé doublon)
-
-// Route pour supprimer une image
-router.delete('/images/:filename', verifyJWT, (req, res) => {
-    const imgDir = path.resolve('public/img');
-    const filePath = path.join(imgDir, req.params.filename);
-    fs.unlink(filePath, err => {
-        if (err) return res.status(500).json({ message: 'Erreur suppression image' });
-        res.sendStatus(204);
-    });
-});

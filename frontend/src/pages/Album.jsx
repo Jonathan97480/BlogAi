@@ -30,7 +30,7 @@ function Album() {
     const handleDelete = async (filename) => {
         if (!window.confirm('Supprimer cette image ?')) return;
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/images/${filename}`, {
+        const res = await fetch(`/api/posts/images/${filename}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
