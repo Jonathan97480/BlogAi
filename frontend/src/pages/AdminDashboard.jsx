@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaEdit, FaArchive, FaTrash, FaUndo } from "react-icons/fa";
 import ArticleEditor from "./ArticleEditor";
 import PagesAdmin from "./PagesAdmin";
 import Album from "./Album";
@@ -111,10 +112,110 @@ function AdminDashboard() {
   };
 
   const reloadPosts = async () => {
-    const res = await fetch("/api/posts", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
-    const data = await res.json();
-    setPosts(Array.isArray(data) ? data : []);
+    const authToken = localStorage.getItem("token");
+    const [postsRes, archivedRes] = await Promise.all([
+      fetch("/api/posts", { headers: { Authorization: `Bearer ${authToken}` } }),
+      fetch("/api/posts/archives", { headers: { Authorization: `Bearer ${authToken}` } }),
+    ]);
+    const postsData = await postsRes.json();
+    const archivedData = await archivedRes.json();
+    setPosts(Array.isArray(postsData) ? postsData : []);
+    setArchived(Array.isArray(archivedData) ? archivedData : []);
   };
+
+  const handleEditPost = (post) => {
+    setEditArticle(post);
+    setShowEditor(true);
+  };
+
+  const handleArchivePost = async (postId) => {
+    if (!window.confirm("Archiver cet article ?")) return;
+    const res = await fetch(`/api/posts/${postId}/archive`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (!res.ok) {
+      alert("Erreur lors de l'archivage");
+      return;
+    }
+    await reloadPosts();
+  };
+
+  const handleUnarchivePost = async (archiveId) => {
+    if (!window.confirm("Restaurer cet article depuis les archives ?")) return;
+    const res = await fetch(`/api/posts/archives/${archiveId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (!res.ok) {
+      alert("Erreur lors de la restauration");
+      return;
+    }
+    await reloadPosts();
+  };
+
+  const handleDeleteArchivedPost = async (postId) => {
+    if (!window.confirm("Supprimer définitivement cet article archivé ?")) return;
+    const res = await fetch(`/api/posts/archives/${postId}/permanent`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (!res.ok) {
+      alert("Erreur lors de la suppression définitive");
+      return;
+    }
+    await reloadPosts();
+  };
+
+  const AdminPostCard = ({ post, archived: isArchived = false }) => (
+    <div className="bg-gray-800 rounded-lg p-4 shadow flex flex-col h-full">
+      {post.media_url && <img src={post.media_url} alt={post.title} className="w-full h-44 object-cover rounded mb-3 border border-gray-700" />}
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h2 className="text-xl font-bold text-blue-300">{post.title}</h2>
+        <div className="flex items-center gap-2 shrink-0">
+          {!isArchived && (
+            <>
+              <button
+                className="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded"
+                title="Éditer"
+                onClick={() => handleEditPost(post)}
+              >
+                <FaEdit />
+              </button>
+              <button
+                className="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded"
+                title="Archiver"
+                onClick={() => handleArchivePost(post.id)}
+              >
+                <FaArchive />
+              </button>
+            </>
+          )}
+          {isArchived && (
+            <>
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white p-2 rounded"
+                title="Restaurer"
+                onClick={() => handleUnarchivePost(post.archive_id || post.id)}
+              >
+                <FaUndo />
+              </button>
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
+                title="Supprimer définitivement"
+                onClick={() => handleDeleteArchivedPost(post.id)}
+              >
+                <FaTrash />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      {post.category && <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>}
+      <p className="text-gray-300 mb-2 flex-1">{post.excerpt}</p>
+      {post.created_at && <span className="text-xs text-gray-500 mt-2">{new Date(post.created_at).toLocaleDateString("fr-FR")}</span>}
+    </div>
+  );
 
   return (
     <>
@@ -151,12 +252,7 @@ function AdminDashboard() {
               {error && <div className="text-red-500 mb-4">{error}</div>}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {posts.map((post) => (
-                  <div key={post.id} className="bg-gray-800 rounded-lg p-4 shadow">
-                    <h2 className="text-xl font-bold text-blue-300 mb-2">{post.title}</h2>
-                    {post.media_url && <img src={post.media_url} alt={post.title} className="w-full h-44 object-cover rounded mb-3 border border-gray-700" />}
-                    <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>
-                    <p className="text-gray-300 mb-2">{post.excerpt}</p>
-                  </div>
+                  <AdminPostCard key={post.id} post={post} />
                 ))}
               </div>
             </>
@@ -170,10 +266,7 @@ function AdminDashboard() {
               <h1 className="text-3xl font-bold mb-6">Archives</h1>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {archived.map((post) => (
-                  <div key={post.id} className="bg-gray-800 rounded-lg p-4 shadow">
-                    <h2 className="text-xl font-bold text-blue-300 mb-2">{post.title}</h2>
-                    <p className="text-gray-300 mb-2">{post.excerpt}</p>
-                  </div>
+                  <AdminPostCard key={post.archive_id || post.id} post={post} archived />
                 ))}
               </div>
             </>
