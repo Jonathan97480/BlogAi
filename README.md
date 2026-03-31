@@ -67,57 +67,50 @@ npm run dev
 - `GET /api/posts/search?q=...`
 - `GET /api/register-admin/status`
 
-## Notes de déploiement (Raspberry Pi + reverse proxy)
+## API externe par clé API (`/api/v1`)
 
-- Le frontend passe par Vite avec proxy:
-  - `/api -> http://localhost:5000`
-  - `/img -> http://localhost:5000`
-- Les URLs d’images doivent rester **relatives** (`/img/...`) pour éviter le mixed-content.
-- TinyMCE est configuré en **local/self-hosted** (pas de dépendance Tiny Cloud).
+Ces routes utilisent l’en-tête suivant :
 
-## Services systemd (exemple)
-
-- `blogai-backend.service` (port 5000)
-- `blogai-frontend.service` (port 5173)
-
-## Tests
-
-```bash
-cd backend
-npm test
+```http
+x-api-key: <VOTRE_CLE_API>
 ```
 
-## Fonctionnalités principales
-- Gestion des articles, pages, catégories, médias
-- API REST sécurisée par clé API
-- Enrichissement IA configurable (OpenRouter, etc.)
-- Interface admin React (édition IA, réseaux sociaux, etc.)
-- Stockage MySQL
+Routes disponibles :
 
-## Configuration IA
-- Les paramètres IA sont éditables depuis l’admin (URL, clé, modèle, prompt)
-- Fusion dynamique entre fichier et base de données
+- `GET /api/v1/getarticlebyName?name=...`
+- `GET /api/v1/getarticlebyID/:id`
+- `POST /api/v1/setArticle`
+- `PUT /api/v1/editArticle/:id`
+- `POST /api/v1/IaOptimiseText`
+- `POST /api/v1/setAdminUser`
+- `GET /api/v1/getAdminUser/:id`
+- `POST /api/v1/uploadImage`
 
-## Réseaux sociaux
-- Les liens sont éditables depuis l’admin et stockés dans la table `socialLink`
+Notes :
+- La clé API est générée depuis le panneau d’administration, section paramètres.
+- Les permissions sont stockées en base dans la table `apiKey`.
+- Le endpoint documenté précédemment sous `/api/ia/posts` n’est pas exposé par le backend actuel.
 
-## Sécurité
-- Authentification admin JWT
-- Permissions par clé API
+### Upload d'image via API externe
 
-## Protection contre l’indexation des bots (admin)
+Route : `POST /api/v1/uploadImage`
 
-Le panneau d’administration intègre une balise meta spéciale pour empêcher l’indexation par les moteurs de recherche :
+- Auth : header `x-api-key`
+- Permission requise : `write`
+- Format : `multipart/form-data`
+- Champ fichier attendu : `image`
 
-- Dans `frontend/src/pages/AdminDashboard.jsx`, la balise suivante est ajoutée via Helmet :
+Réponse type :
 
-```jsx
-<Helmet>
-  <meta name="robots" content="noindex, nofollow" />
-</Helmet>
+```json
+{
+  "success": true,
+  "media_id": 11,
+  "filename": "1774950271483-190082663.png",
+  "url": "/img/api/1774950271483-190082663.png"
+}
 ```
 
-Cela garantit que les pages d’administration ne seront pas référencées ni suivies par les bots ou moteurs de recherche.
 
 ## Auteur
 - Projet initial par [VotreNom]
