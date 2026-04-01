@@ -59,6 +59,61 @@ cd frontend
 npm run dev
 ```
 
+## Mise à jour en production
+
+### 1. Installer les nouvelles dépendances
+
+Après chaque `git pull`, toujours relancer les installations :
+
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+> La version actuelle ajoute `chai` dans les devDependencies du backend (tests unitaires). Un `npm install` suffit.
+
+### 2. Appliquer les migrations de base de données
+
+Les migrations sontà appliquer **une seule fois** sur chaque environnement.  
+Connectez-vous à votre BDD MySQL/MariaDB et exécutez les fichiers manquants dans l'ordre :
+
+#### Migration — ajout du statut d'article
+
+```sql
+-- Fichier : database/migrate_add_post_status.sql
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'brouillon';
+```
+
+Via CLI :
+```bash
+mysql -u <user> -p <database> < database/migrate_add_post_status.sql
+```
+
+Via phpMyAdmin : onglet **SQL**, copier-coller le contenu du fichier.
+
+> **Important :** Sans cette migration, les routes `PUT /api/posts/:id` et `POST /api/posts` retourneront une erreur 500.
+
+### 3. Ordre complet pour une nouvelle installation
+
+```bash
+# 1. Cloner et installer
+git clone https://github.com/Jonathan97480/BlogAi.git
+cd BlogAi
+cd backend && npm install
+cd ../frontend && npm install
+
+# 2. Configurer l'environnement
+cp backend/.env.example backend/.env  # puis éditer les variables
+
+# 3. Initialiser la base (nouvelle installation uniquement)
+cd backend && node src/initDb.js
+
+# 4. Sur un serveur existant : appliquer les migrations
+mysql -u <user> -p <database> < database/migrate_add_post_status.sql
+```
+
+---
+
 ## Points API utiles
 
 - `POST /api/login`
@@ -93,11 +148,19 @@ Routes disponibles :
 - `DELETE /api/v1/ideas/:id`
 - `PATCH /api/v1/ideas/:id/processed`
 
+- `PUT /api/v1/ideas/:id`
+- `GET /api/v1/ideas/`
+- `GET /api/v1/ideas/:id`
+- `POST /api/v1/ideas`
+- `DELETE /api/v1/ideas/:id`
+- `PATCH /api/v1/ideas/:id/processed`
+
 Notes :
-- La clé API est générée depuis le panneau d’administration, section paramètres.
+- La clé API est générée depuis le panneau d'administration, section paramètres.
 - Les permissions sont stockées en base dans la table `apiKey`.
-- Le endpoint documenté précédemment sous `/api/ia/posts` n’est pas exposé par le backend actuel.
+- Le endpoint documenté précédemment sous `/api/ia/posts` n'est pas exposé par le backend actuel.
 - `setArticle` et `editArticle` utilisent désormais la structure réelle du projet (`posts`, `categorie`, `page_post`).
+- Le champ `status` (`'brouillon'` / `'publié'`) est supporté sur `setArticle` et `editArticle`.
 
 ### Création d'article via API externe
 

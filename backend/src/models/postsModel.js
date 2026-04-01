@@ -96,7 +96,17 @@ export async function getAllAdmin() {
 
 export async function getById(id) {
     try {
-        const [rows] = await pool.query('SELECT * FROM posts WHERE id = ?', [id]);
+        const [rows] = await pool.query(
+            `SELECT posts.*, media.url AS media_url, media.id AS media_id,
+                    categorie.name AS category, page.titre AS page_titre
+             FROM posts
+             LEFT JOIN media ON posts.media_id = media.id
+             LEFT JOIN categorie ON posts.category_id = categorie.id
+             LEFT JOIN page_post ON posts.id = page_post.post_id
+             LEFT JOIN page ON page_post.page_id = page.id
+             WHERE posts.id = ?`,
+            [id]
+        );
         return rows[0];
     } catch (err) {
         logError('postsModel.js', err.message);

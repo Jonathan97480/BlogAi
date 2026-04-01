@@ -1,8 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import './ArticleContent.css';
+
+function getCategoryColor(category) {
+    const colors = {
+        'GAME': 'bg-purple-600',
+        'TESR': 'bg-cyan-600',
+        'IA': 'bg-pink-600',
+        'TECH': 'bg-blue-600',
+        'DEFAULT': 'bg-gray-500',
+    };
+    return colors[category?.toUpperCase()] || colors.DEFAULT;
+}
 
 function ArticleView() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -24,28 +37,25 @@ function ArticleView() {
             .replace(/src="\/\/img\//g, 'src="/img/');
     }, [article]);
 
-    // Ajout d'une marge inférieure sur tous les <p> du contenu après le rendu
-    useEffect(() => {
-        const container = document.querySelector('.prose, .article-content, .mce-content-body');
-        if (container) {
-            container.querySelectorAll('p').forEach(p => {
-                p.style.marginBottom = '1.5em';
-            });
-        }
-    }, [normalizedContent]);
-
     if (loading) return <div className="p-6">Chargement...</div>;
     if (error || !article) return <div className="p-6 text-red-500">{error || 'Article introuvable.'}</div>;
 
     return (
         <div className="max-w-3xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
-            <div className="mb-2 text-gray-400">Catégorie : {article.category_id}</div>
+            {article.category && (
+                <button
+                    onClick={() => navigate(`/category/${encodeURIComponent(article.category)}`)}
+                    className={`text-xs font-bold px-3 py-1 rounded-full text-white shadow ${getCategoryColor(article.category)} mb-4 hover:opacity-80 transition-opacity`}
+                >
+                    {article.category.toUpperCase()}
+                </button>
+            )}
             <div className="mb-6 text-gray-400">Publié le {new Date(article.created_at).toLocaleDateString()}</div>
             {article.media_url && (
-                <img src={article.media_url} alt="" className="mb-6 rounded shadow max-h-96 mx-auto" />
+                <img src={article.media_url} alt="" className="mb-6 rounded shadow w-full object-cover" style={{ maxHeight: '480px' }} />
             )}
-            <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: normalizedContent }} />
+            <div className="article-content" dangerouslySetInnerHTML={{ __html: normalizedContent }} />
         </div>
     );
 }
