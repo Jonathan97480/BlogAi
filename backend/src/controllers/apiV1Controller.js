@@ -1,5 +1,6 @@
 import pool from '../models/db.js';
 import { create as createPost } from '../models/postsModel.js';
+import { logError } from '../utils/logger.js';
 
 export async function getArticleByName(req, res) {
     if (!req.apiPerms.read) return res.status(403).json({ message: 'Permission lecture requise' });
@@ -19,7 +20,7 @@ export async function getArticleByID(req, res) {
 export async function setArticle(req, res) {
     if (!req.apiPerms.write) return res.status(403).json({ message: 'Permission écriture requise' });
     try {
-        const { title, content, category_id, page_id, excerpt, image_url, image_filename } = req.body || {};
+        const { title, content, category_id, page_id, excerpt, status, image_url, image_filename } = req.body || {};
         if (!title || !content || !category_id) {
             return res.status(400).json({ message: 'Champs obligatoires manquants (title, content, category_id)' });
         }
@@ -29,6 +30,7 @@ export async function setArticle(req, res) {
             category_id,
             excerpt: excerpt || '',
             content,
+            status: status || 'brouillon',
             image_url: image_url || null,
             image_filename: image_filename || null
         });
@@ -54,15 +56,30 @@ export async function editArticle(req, res) {
     if (!req.apiPerms.write) return res.status(403).json({ message: 'Permission écriture requise' });
     try {
         const { id } = req.params;
-        const { title, content, category_id, page_id, excerpt } = req.body || {};
+        const { title, content, category_id, page_id, excerpt, status, image_url, image_filename } = req.body || {};
         if (!title || !content || !category_id) {
             return res.status(400).json({ message: 'Champs obligatoires manquants (title, content, category_id)' });
         }
 
-        const [result] = await pool.query(
-            'UPDATE posts SET title = ?, category_id = ?, excerpt = ?, content = ? WHERE id = ?',
-            [title, category_id, excerpt || '', content, id]
-        );
+        let media_id = null;
+        if (image_url && image_filename) {
+            const [mediaRes] = await pool.query(
+                'INSERT INTO media (filename, url) VALUES (?, ?)',
+                [image_filename, image_url]
+            );
+            media_id = mediaRes.insertId;
+        }
+
+        let sql = 'UPDATE posts SET title = ?, category_id = ?, excerpt = ?, content = ?, status = ?';
+        const params = [title, category_id, excerpt || '', content, status || 'brouillon'];
+        if (media_id) {
+            sql += ', media_id = ?';
+            params.push(media_id);
+        }
+        sql += ' WHERE id = ?';
+        params.push(id);
+
+        const [result] = await pool.query(sql, params);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Article non trouvé' });
@@ -73,9 +90,9 @@ export async function editArticle(req, res) {
             await pool.query('INSERT INTO page_post (page_id, post_id) VALUES (?, ?)', [page_id, id]);
         }
 
-        res.json({ id: Number(id), title, category_id, page_id: page_id || null });
+        res.json({ id: Number(id), title, category_id, page_id: page_id || null, status: status || 'brouillon' });
     } catch (err) {
-        console.error('[apiV1Controller.editArticle]', err);
+        logError('apiV1Controller.js', err.message);
         res.status(500).json({ message: 'Erreur lors de la modification de l\'article', error: err.message });
     }
 }

@@ -20,6 +20,7 @@ import {
     getAllIdeas,
     getIdeaById,
     createIdea,
+    updateIdea,
     deleteIdea,
     markIdeaProcessed
 } from '../models/ideaModel.js';
@@ -146,6 +147,31 @@ router.post('/ideas', async (req, res) => {
     } catch (err) {
         logError('routes/apiV1.js', '[POST /api/v1/ideas] ' + (err.stack || err.message));
         res.status(500).json({ message: 'Erreur lors de la création de l\'idée' });
+    }
+});
+
+router.put('/ideas/:id', async (req, res) => {
+    if (!req.apiPerms.write) {
+        return res.status(403).json({ message: 'Permission écriture requise' });
+    }
+    const { title, category_id, content, excerpt, media_id } = req.body || {};
+    if (!title || !category_id || !content) {
+        return res.status(400).json({ message: 'Champs obligatoires manquants (title, category_id, content)' });
+    }
+    try {
+        const existing = await getIdeaById(req.params.id);
+        if (!existing) return res.status(404).json({ message: 'Idée non trouvée' });
+        await updateIdea(req.params.id, {
+            title,
+            category_id,
+            content,
+            excerpt: excerpt || '',
+            media_id: media_id || null
+        });
+        res.json({ id: Number(req.params.id), title, category_id, content, excerpt: excerpt || '', media_id: media_id || null });
+    } catch (err) {
+        logError('routes/apiV1.js', '[PUT /api/v1/ideas/:id] ' + (err.stack || err.message));
+        res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'idée' });
     }
 });
 
