@@ -52,7 +52,7 @@ function AdminDashboard() {
       return;
     }
 
-    fetch("/api/posts", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/posts/admin/all", { headers: { Authorization: `Bearer ${token}` } })
       .then(async (res) => {
         if (res.status === 401 || res.status === 403) {
           localStorage.removeItem("token");
@@ -121,7 +121,7 @@ function AdminDashboard() {
   const reloadPosts = async () => {
     const authToken = localStorage.getItem("token");
     const [postsRes, archivedRes] = await Promise.all([
-      fetch("/api/posts", { headers: { Authorization: `Bearer ${authToken}` } }),
+      fetch("/api/posts/admin/all", { headers: { Authorization: `Bearer ${authToken}` } }),
       fetch("/api/posts/archives", { headers: { Authorization: `Bearer ${authToken}` } }),
     ]);
     const postsData = await postsRes.json();

@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { updatePost, getPostsByCategory, getAllPosts, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController } from '../controllers/postsController.js';
+import { updatePost, getPostsByCategory, getAllPosts, getAllPostsAdmin, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController } from '../controllers/postsController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import pool from '../models/db.js';
 
@@ -141,6 +141,9 @@ router.get('/archives', verifyJWT, getArchivedPosts);
 
 // Route pour désarchiver un article (supprime la ligne d'archive)
 router.delete('/archives/:archiveId', verifyJWT, unarchivePost);
+
+// Route admin : tous les articles (brouillons inclus), protégée
+router.get('/admin/all', verifyJWT, getAllPostsAdmin);
 
 // Route pour récupérer tous les articles (publique)
 router.get('/', getAllPosts);

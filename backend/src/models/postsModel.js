@@ -56,7 +56,8 @@ export async function getAll({ category, title }) {
         LEFT JOIN categorie ON posts.category_id = categorie.id 
         LEFT JOIN page_post ON posts.id = page_post.post_id 
         LEFT JOIN page ON page_post.page_id = page.id 
-        WHERE posts.id NOT IN (SELECT post_id FROM archives)`;
+        WHERE posts.id NOT IN (SELECT post_id FROM archives)
+        AND posts.status = 'publié'`;
     const params = [];
     try {
         if (category) {
@@ -69,6 +70,23 @@ export async function getAll({ category, title }) {
         }
         sql += ' ORDER BY posts.created_at DESC';
         const [rows] = await pool.query(sql, params);
+        return rows;
+    } catch (err) {
+        logError('postsModel.js', err.message);
+        throw err;
+    }
+}
+
+export async function getAllAdmin() {
+    try {
+        const [rows] = await pool.query(`SELECT DISTINCT posts.*, media.url AS media_url, media.id AS media_id, categorie.name AS category, page.titre AS page_titre 
+            FROM posts 
+            LEFT JOIN media ON posts.media_id = media.id 
+            LEFT JOIN categorie ON posts.category_id = categorie.id 
+            LEFT JOIN page_post ON posts.id = page_post.post_id 
+            LEFT JOIN page ON page_post.page_id = page.id 
+            WHERE posts.id NOT IN (SELECT post_id FROM archives)
+            ORDER BY posts.created_at DESC`);
         return rows;
     } catch (err) {
         logError('postsModel.js', err.message);

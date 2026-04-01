@@ -38,7 +38,7 @@ export async function updatePost(req, res) {
         res.status(500).json({ message: 'Erreur lors de la modification' });
     }
 }
-import { getAll, getById, create, archive, getArchived, unarchive, deletePostAndArchive } from '../models/postsModel.js';
+import { getAll, getAllAdmin, getById, create, archive, getArchived, unarchive, deletePostAndArchive } from '../models/postsModel.js';
 
 // Retourne tous les articles d'une catégorie (publique)
 export async function getPostsByCategory(req, res) {
@@ -94,6 +94,15 @@ export async function getAllPosts(req, res) {
     try {
         const { category, title } = req.query;
         const posts = await getAll({ category, title });
+        res.json(posts);
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+}
+
+export async function getAllPostsAdmin(req, res) {
+    try {
+        const posts = await getAllAdmin();
         res.json(posts);
     } catch (err) {
         res.status(500).json({ message: 'Erreur serveur' });
