@@ -13,13 +13,13 @@ export async function updatePost(req, res) {
             );
             media_id = mediaRes.insertId;
         }
-        const { title, category_id, content, page_id } = req.body;
+        const { title, category_id, content, page_id, status } = req.body;
         const { id } = req.params;
         if (!title || !category_id || !content) {
             return res.status(400).json({ message: 'Champs obligatoires manquants.' });
         }
-        let updateSql = 'UPDATE posts SET title = ?, category_id = ?, content = ?';
-        const params = [title, category_id, content];
+        let updateSql = 'UPDATE posts SET title = ?, category_id = ?, content = ?, status = ?';
+        const params = [title, category_id, content, status || 'brouillon'];
         if (media_id) {
             updateSql += ', media_id = ?';
             params.push(media_id);
@@ -120,10 +120,10 @@ export async function createPost(req, res) {
             image_filename = req.file.filename;
             image_url = `/img/${image_filename}`;
         }
-        const { title, category_id, content, page_id } = req.body;
+        const { title, category_id, content, page_id, status } = req.body;
         // Extrait un excerpt automatique si non fourni
         const excerpt = content ? content.replace(/<[^>]+>/g, '').slice(0, 200) : '';
-        const post = await create({ title, category_id, excerpt, content, image_url, image_filename });
+        const post = await create({ title, category_id, excerpt, content, image_url, image_filename, status });
 
         // Lier à une page si page_id fourni
         if (page_id) {

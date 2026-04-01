@@ -278,6 +278,11 @@ function AdminDashboard() {
           )}
         </div>
       </div>
+      <div className="mb-2">
+        <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${post.status === "publié" ? "bg-green-800 text-green-300" : "bg-yellow-800 text-yellow-200"}`}>
+          {post.status === "publié" ? "Publié" : "Brouillon"}
+        </span>
+      </div>
       {post.category && <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>}
       <p className="text-gray-300 mb-2 flex-1">{post.excerpt}</p>
       {post.created_at && <span className="text-xs text-gray-500 mt-2">{new Date(post.created_at).toLocaleDateString("fr-FR")}</span>}
@@ -316,9 +321,8 @@ function AdminDashboard() {
             <FaEdit /> Éditer
           </button>
           <button
-            className={`flex-1 font-semibold py-2 px-3 rounded flex items-center justify-center gap-2 ${
-              idea.is_processed ? "bg-gray-600 cursor-not-allowed text-gray-300" : "bg-green-600 hover:bg-green-700 text-white"
-            }`}
+            className={`flex-1 font-semibold py-2 px-3 rounded flex items-center justify-center gap-2 ${idea.is_processed ? "bg-gray-600 cursor-not-allowed text-gray-300" : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
             onClick={() => !idea.is_processed && onMarkProcessed && onMarkProcessed()}
             disabled={idea.is_processed}
             type="button"

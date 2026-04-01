@@ -36,6 +36,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [pages, setPages] = useState([]);
+    const [status, setStatus] = useState(article?.status || 'brouillon');
 
     // Récupère les pages à l'ouverture
     useEffect(() => {
@@ -66,6 +67,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
         setContent(article?.content || '');
         setImage(null);
         setPageId(article?.page_id || '');
+        setStatus(article?.status || 'brouillon');
     }, [article]);
 
     // Récupère les catégories et pages à l'ouverture
@@ -102,6 +104,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
         formData.append('title', title);
         formData.append('category_id', categoryId);
         formData.append('content', content);
+        formData.append('status', status);
         if (pageId) formData.append('page_id', pageId);
         if (image) formData.append('image', image);
         const token = localStorage.getItem('token');
@@ -118,8 +121,8 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
         });
         const data = await res.json();
         if (res.ok) {
-            setSuccess(article && article.id ? 'Article modifié !' : 'Article publié !');
-            setTitle(''); setCategoryId(''); setContent(''); setImage(null); setPageId('');
+            setSuccess(article && article.id ? 'Article modifié !' : (status === 'brouillon' ? 'Brouillon enregistré !' : 'Article publié !'));
+            setTitle(''); setCategoryId(''); setContent(''); setImage(null); setPageId(''); setStatus('brouillon');
             if (onArticleSaved) onArticleSaved();
         } else {
             setError(data.message || 'Erreur lors de la publication.');
@@ -129,7 +132,9 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
     // Désactive le bouton si un champ requis est manquant
     const hasExistingCover = !!(article && (article.media_url || article.media_id));
     const hasNewCover = !!image;
-    const isDisabled = !title || !categoryId || !pageId || (!hasNewCover && !hasExistingCover);
+    const isDisabled = status === 'brouillon'
+        ? !title
+        : !title || !categoryId || !pageId || (!hasNewCover && !hasExistingCover);
 
 
     // Log de montage du composant (optionnel)
@@ -159,6 +164,19 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                 <h2 className="text-xl font-bold mb-4">Nouvel article</h2>
                 {error && <div className="text-red-500 mb-2">{error}</div>}
                 {success && <div className="text-green-500 mb-2">{success}</div>}
+                <div className="flex items-center gap-3 mb-4">
+                    <span className="font-semibold text-sm">Statut :</span>
+                    <button
+                        type="button"
+                        onClick={() => setStatus(s => s === 'brouillon' ? 'publié' : 'brouillon')}
+                        className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${status === 'brouillon'
+                                ? 'bg-yellow-600 text-white'
+                                : 'bg-green-600 text-white'
+                            }`}
+                    >
+                        {status === 'brouillon' ? 'Brouillon' : 'Publié'}
+                    </button>
+                </div>
                 <label className="block mb-1 font-semibold">Titre <span className="text-red-500">*</span></label>
                 <input type="text" placeholder="Titre" value={title} onChange={e => setTitle(e.target.value)} className="w-full mb-3 p-2 rounded bg-gray-700 text-white" required />
                 <div className="mb-3">
@@ -236,7 +254,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         className={`flex-1 font-bold py-2 rounded ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                         disabled={isDisabled}
                     >
-                        Publier
+                        {status === 'brouillon' ? 'Enregistrer brouillon' : 'Publier'}
                     </button>
                     <button
                         type="button"

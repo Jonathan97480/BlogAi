@@ -87,7 +87,7 @@ export async function getById(id) {
 }
 
 export async function create(post) {
-    const { title, category_id, excerpt, content, image_url, image_filename } = post;
+    const { title, category_id, excerpt, content, image_url, image_filename, status } = post;
     let media_id = null;
     const conn = pool;
     try {
@@ -99,11 +99,12 @@ export async function create(post) {
             );
             media_id = mediaRes.insertId;
         }
+        const postStatus = status || 'brouillon';
         const [result] = await conn.query(
-            'INSERT INTO posts (title, category_id, excerpt, content, media_id) VALUES (?, ?, ?, ?, ?)',
-            [title, category_id, excerpt, content, media_id]
+            'INSERT INTO posts (title, category_id, excerpt, content, media_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+            [title, category_id, excerpt, content, media_id, postStatus]
         );
-        return { id: result.insertId, ...post, media_id };
+        return { id: result.insertId, ...post, media_id, status: postStatus };
     } catch (err) {
         logError('postsModel.js', err.message);
         throw err;
