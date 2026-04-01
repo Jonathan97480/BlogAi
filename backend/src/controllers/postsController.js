@@ -3,31 +3,32 @@ export async function updatePost(req, res) {
     try {
         let image_url = null;
         let image_filename = null;
+        let media_id = null;
         if (req.file) {
             image_filename = req.file.filename;
             image_url = `/img/${image_filename}`;
+            const [mediaRes] = await pool.query(
+                'INSERT INTO media (filename, url) VALUES (?, ?)',
+                [image_filename, image_url]
+            );
+            media_id = mediaRes.insertId;
         }
         const { title, category_id, content, page_id } = req.body;
         const { id } = req.params;
         if (!title || !category_id || !content) {
             return res.status(400).json({ message: 'Champs obligatoires manquants.' });
         }
-        // Met à jour l'article
         let updateSql = 'UPDATE posts SET title = ?, category_id = ?, content = ?';
         const params = [title, category_id, content];
-        if (image_url && image_filename) {
-            // Ajoute l'image si uploadée
-            updateSql += ', media_id = (SELECT id FROM media WHERE filename = ? LIMIT 1)';
-            params.push(image_filename);
+        if (media_id) {
+            updateSql += ', media_id = ?';
+            params.push(media_id);
         }
         updateSql += ' WHERE id = ?';
         params.push(id);
         await pool.query(updateSql, params);
 
-        // Met à jour la liaison page_post
-        // 1. Supprime l'ancienne liaison
         await pool.query('DELETE FROM page_post WHERE post_id = ?', [id]);
-        // 2. Ajoute la nouvelle si page_id fourni
         if (page_id) {
             await pool.query('INSERT INTO page_post (page_id, post_id) VALUES (?, ?)', [page_id, id]);
         }

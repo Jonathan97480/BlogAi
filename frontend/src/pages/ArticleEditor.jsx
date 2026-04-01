@@ -127,7 +127,9 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
     };
 
     // Désactive le bouton si un champ requis est manquant
-    const isDisabled = !title || !categoryId || !pageId || (!image && !(article && article.media_url));
+    const hasExistingCover = !!(article && (article.media_url || article.media_id));
+    const hasNewCover = !!image;
+    const isDisabled = !title || !categoryId || !pageId || (!hasNewCover && !hasExistingCover);
 
 
     // Log de montage du composant (optionnel)
