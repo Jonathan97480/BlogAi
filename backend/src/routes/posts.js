@@ -48,6 +48,7 @@ router.get('/search', async (req, res) => {
             LEFT JOIN categorie c ON p.category_id = c.id
             LEFT JOIN archives a ON a.post_id = p.id
             WHERE a.post_id IS NULL
+              AND p.status = 'publi\u00e9'
               AND (p.title LIKE ? OR p.content LIKE ?)
             ORDER BY p.created_at DESC
         `, [`%${q}%`, `%${q}%`]);

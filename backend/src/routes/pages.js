@@ -33,6 +33,7 @@ router.get('/:id/posts', async (req, res) => {
                         LEFT JOIN archives a ON a.post_id = p.id
                         WHERE pp.page_id = ?
                             AND a.post_id IS NULL
+                            AND p.status = 'publi\u00e9'
                         ORDER BY p.id DESC
                 `, [id]);
         res.json(rows);

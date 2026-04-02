@@ -330,5 +330,24 @@ Le badge **Publié** / **Brouillon** sur chaque carte d'article est cliquable :
 
 Route backend ajoutée : `PATCH /api/posts/:id/status` (JWT requis, body `{ "status": "publié" | "brouillon" }`)
 
+## Infinite scroll (pages publiques)
+
+Les pages publiques suivantes utilisent un système de chargement au défilement :
+
+- `/page/:id` — articles d'une page
+- `/category/:category` — articles d'une catégorie
+- `/search?q=...` — résultats de recherche
+
+### Fonctionnement
+
+- **4 articles** affichés au chargement initial
+- **4 articles supplémentaires** révélés automatiquement dès que l'utilisateur approche le bas de la page (`IntersectionObserver`)
+- Quand tous les articles ont été affichés, un message apparaît : *"Vous avez tout vu — N articles au total."*
+- La liste se réinitialise automatiquement lors d'un changement de page, catégorie ou recherche
+
+Implémenté via le hook réutilisable `frontend/src/hooks/useInfiniteSlice.js`.
+
+> **Note :** Les routes `/api/pages/:id/posts` et `/api/posts/search` ont été corrigées pour n'exposer que les articles avec `status = 'publié'`.
+
 ## Auteur
 - Projet initial par [VotreNom]
