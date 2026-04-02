@@ -25,18 +25,55 @@ cd ../frontend && npm install
 
 ## Configuration backend
 
-Créer `backend/.env` :
+Créer `backend/.env` (ne pas versionner ce fichier) :
 
 ```env
+# ── Base de données ────────────────────────────────────────────────
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=azerty
 DB_NAME=blog_ai_tech
-JWT_SECRET=une_chaine_secrete
+
+# ── Sécurité ───────────────────────────────────────────────────────
+JWT_SECRET=une_chaine_secrete_longue_et_aleatoire
+
+# ── IA ─────────────────────────────────────────────────────────────
 IA_API_KEY=change-me
+
+# ── Serveur ────────────────────────────────────────────────────────
 PORT=5000
 LOG_ERRORS=true
 ```
+
+### Variables de réglage avancé (optionnelles)
+
+Ces variables ont des valeurs par défaut fonctionnelles. Ne les définir que si vous avez besoin d'ajuster les performances en production.
+
+```env
+# Pool de connexions MySQL
+# Nombre de connexions simultanées à la BDD (défaut : 10)
+DB_CONNECTION_LIMIT=10
+# Taille de la file d'attente SQL, 0 = illimitée (défaut : 0)
+DB_QUEUE_LIMIT=0
+
+# File d'attente des appels IA (/api/ia/enrich et /api/v1/IaOptimiseText)
+# Nombre d'appels IA traités en parallèle (défaut : 2)
+IA_CONCURRENCY=2
+# Nb max de requêtes en attente avant rejet 503 (défaut : 20)
+IA_QUEUE_MAX=20
+# Délai max d'attente en ms avant rejet 503 (défaut : 60000 = 60s)
+IA_QUEUE_TIMEOUT=60000
+
+# File d'attente des uploads (/api/upload/quill et /api/v1/uploadImage)
+# Nombre d'uploads traités en parallèle (défaut : 3)
+UPLOAD_CONCURRENCY=3
+# Nb max de requêtes en attente avant rejet 503 (défaut : 10)
+UPLOAD_QUEUE_MAX=10
+# Délai max d'attente en ms avant rejet 503 (défaut : 30000 = 30s)
+UPLOAD_QUEUE_TIMEOUT=30000
+```
+
+> **En production**, augmenter `DB_CONNECTION_LIMIT` si votre serveur MySQL supporte plus de connexions simultanées. Pour un serveur avec peu de RAM, réduire `IA_CONCURRENCY` à `1` évite que les appels IA ne saturent la mémoire.
 
 ## Initialiser la base
 
