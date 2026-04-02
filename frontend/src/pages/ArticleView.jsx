@@ -52,10 +52,13 @@ function ArticleView() {
     return (
         <div className="max-w-3xl mx-auto p-6">
             <Helmet>
-                <title>{article.title}</title>
+                <title>{article.title} — Blog AI & High-Tech</title>
+                <meta name="description" content={ogDescription || undefined} />
                 <meta property="og:type" content="article" />
+                <meta property="og:site_name" content="Blog AI & High-Tech" />
                 <meta property="og:url" content={ogUrl} />
                 <meta property="og:title" content={article.title} />
+                <meta property="og:locale" content="fr_FR" />
                 {ogDescription && <meta property="og:description" content={ogDescription} />}
                 {ogImage && <meta property="og:image" content={ogImage} />}
                 <meta name="twitter:card" content="summary_large_image" />
