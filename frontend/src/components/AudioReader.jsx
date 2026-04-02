@@ -9,10 +9,17 @@ import { useTextToSpeech } from '../hooks/useTextToSpeech.js';
  *   - content : HTML brut du contenu (balises supprimées avant lecture)
  */
 export default function AudioReader({ title, content }) {
-    const rawText = [
-        title || '',
-        (content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-    ].join('. ');
+    // Supprime les balises img, figure, figcaption et leurs contenus entiers
+    // puis retire toutes les autres balises HTML
+    const cleaned = (content || '')
+        .replace(/<img[^>]*>/gi, ' ')
+        .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, ' ')
+        .replace(/<figcaption[^>]*>[\s\S]*?<\/figcaption>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const rawText = [title || '', cleaned].join('. ');
 
     const { status, progress, total, play, pause, stop, supported } = useTextToSpeech(rawText);
 
@@ -28,11 +35,10 @@ export default function AudioReader({ title, content }) {
             <button
                 onClick={isPlaying ? pause : play}
                 type="button"
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    isActive
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
                         : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                }`}
+                    }`}
                 title={isPlaying ? 'Mettre en pause' : isPaused ? 'Reprendre la lecture' : 'Écouter cet article'}
             >
                 {isPlaying ? (
