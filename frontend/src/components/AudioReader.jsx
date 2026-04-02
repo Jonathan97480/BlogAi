@@ -13,6 +13,7 @@ export default function AudioReader({ title, content }) {
     // puis retire toutes les autres balises HTML
     const cleaned = (content || '')
         .replace(/<img[^>]*>/gi, ' ')
+        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, ' ')
         .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, ' ')
         .replace(/<figcaption[^>]*>[\s\S]*?<\/figcaption>/gi, ' ')
         .replace(/<[^>]+>/g, ' ')
@@ -36,8 +37,8 @@ export default function AudioReader({ title, content }) {
                 onClick={isPlaying ? pause : play}
                 type="button"
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
                     }`}
                 title={isPlaying ? 'Mettre en pause' : isPaused ? 'Reprendre la lecture' : 'Écouter cet article'}
             >
