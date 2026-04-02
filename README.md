@@ -448,5 +448,26 @@ Implémenté via le hook `frontend/src/hooks/useTextToSpeech.js` et le composant
 
 > **Compatibilité :** Chrome, Edge, Safari, Firefox récent. Sur mobile, la lecture doit être déclenchée par un geste utilisateur (le bouton suffit).
 
+
+## Favicons et icônes du site
+
+Pour éviter les problèmes de chargement en développement et via le frontend Vite, les favicons doivent être placés directement à la racine de `frontend/public/` plutôt que dépendre d'un sous-dossier profond.
+
+Fichiers recommandés :
+
+- `frontend/public/favicon-16x16.png`
+- `frontend/public/favicon-32x32.png`
+- `frontend/public/apple-touch-icon.png`
+
+Dans `frontend/index.html`, privilégier des liens simples :
+
+```html
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="apple-touch-icon" sizes="512x512" href="/apple-touch-icon.png" />
+```
+
+Note développeur : une tentative précédente avec des assets sous `/img/iconBlog/...` a provoqué des 404 côté frontend alors que les fichiers existaient bien dans le projet. La solution la plus robuste a été de copier les icônes à la racine de `frontend/public/` et de référencer directement ces chemins dans `index.html`.
+
 ## Auteur
 - Projet initial par [VotreNom]
