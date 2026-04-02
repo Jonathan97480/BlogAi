@@ -349,25 +349,59 @@ Implémenté via le hook réutilisable `frontend/src/hooks/useInfiniteSlice.js`.
 
 > **Note :** Les routes `/api/pages/:id/posts` et `/api/posts/search` ont été corrigées pour n'exposer que les articles avec `status = 'publié'`.
 
-## Partage social (PostCard)
+## Partage social (PostCard + page article)
 
-Chaque carte d'article affiche des boutons de partage :
+Les boutons de partage sont présents à deux endroits :
+
+- **Cartes articles** (`PostCard`) — icônes compactes
+- **Page article** (`/article/:id`) — boutons avec libellé, en haut ET en bas de l'article
 
 | Réseau | Comportement |
 |--------|-------------|
-| X (Twitter) | Ouvre un tweet pré-rempli avec le titre, l'extrait et le lien |
-| Facebook | Ouvre le sharer Facebook — l'aperçu (titre, image, description) est alimenté par les balises **Open Graph** de la page article |
-| Reddit | Ouvre le formulaire Reddit avec le titre et le lien |
-| TikTok | Copie le lien dans le presse-papiers (TikTok n'expose pas d'URL de partage web) — un message `"Copié !"` s'affiche 2 secondes |
+| X (Twitter) | Tweet pré-rempli avec titre, extrait et lien |
+| Facebook | Sharer Facebook — aperçu alimenté par les balises Open Graph |
+| Reddit | Formulaire Reddit avec titre et lien |
+| TikTok | Copie le lien dans le presse-papiers — message `"Copié !"` 2 secondes |
 
-### Balises Open Graph
+### Balises Open Graph & carte d'identité du site
 
-La page article (`/article/:id`) injecte dynamiquement via `react-helmet` :
+`index.html` contient des balises OG statiques pour le site entier :
 
-- `og:title`, `og:description`, `og:image`, `og:url`
-- `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
+- `og:title`, `og:description`, `og:image` (logo 512px), `og:url`, `og:locale`
+- `twitter:card` de type `summary`
+- URL de prod : `https://blogaitech.jon-dev.fr/`
 
-> **Note :** En développement local Facebook ne peut pas crawler `localhost`. Les aperçus seront visibles uniquement sur le serveur de production.
+La page article (`/article/:id`) les écrase dynamiquement via `react-helmet` :
+
+- `og:type = article`, `og:title`, `og:description` (extrait nettoyé), `og:image` (couverture)
+- `twitter:card = summary_large_image`
+
+> **Note :** En développement local Facebook ne peut pas crawler `localhost`. Les aperçus sont visibles uniquement sur le serveur de production (outil de test : [developers.facebook.com/tools/debug](https://developers.facebook.com/tools/debug)).
+
+## Lecture audio des articles (Text-to-Speech)
+
+Les articles disposent d'un bouton **"Écouter l'article"** qui utilise l'API native **Web Speech (SpeechSynthesis)** — aucune dépendance externe, aucun coût.
+
+### Fonctionnement
+
+- Bouton haut-parleur affiché au-dessus des boutons de partage
+- Lit le titre puis le contenu de l'article
+- États : **lecture** → **pause** → **reprendre** → **arrêter**
+- Progression affichée en temps réel : *"N / total phrases"*
+- Voix française (`fr-FR`) sélectionnée automatiquement si disponible sur l'OS
+- La lecture s'arrête proprement au changement de page
+
+### Nettoyage du texte avant lecture
+
+Avant envoi au moteur TTS, le contenu est nettoyé :
+
+- Balises `<img>`, `<iframe>`, `<figure>`, `<figcaption>` supprimées entièrement
+- Toutes les autres balises HTML retirées
+- Entités HTML décodées (`&eacute;` → `é`, `&nbsp;` → espace, etc.)
+
+Implémenté via le hook `frontend/src/hooks/useTextToSpeech.js` et le composant `frontend/src/components/AudioReader.jsx`.
+
+> **Compatibilité :** Chrome, Edge, Safari, Firefox récent. Sur mobile, la lecture doit être déclenchée par un geste utilisateur (le bouton suffit).
 
 ## Auteur
 - Projet initial par [VotreNom]
