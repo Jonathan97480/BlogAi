@@ -1,10 +1,10 @@
-
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import verifyJWT from '../middleware/verifyJWT.js';
 import pool from '../models/db.js';
+import { uploadQueue } from '../middleware/requestQueue.js';
 
 const router = express.Router();
 
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // POST /api/upload/quill
-router.post('/quill', verifyJWT, upload.single('image'), (req, res) => {
+router.post('/quill', verifyJWT, uploadQueue, upload.single('image'), (req, res) => {
     console.log('[UPLOAD] Requête reçue /api/upload/quill');
     if (!req.file) {
         console.log('[UPLOAD] Aucun fichier reçu');

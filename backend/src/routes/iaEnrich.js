@@ -3,12 +3,13 @@ import fetch from 'node-fetch';
 import config from '../IaEditorConfig.js';
 import { getIaConfig } from '../controllers/apiIATextController.js';
 import { logError } from '../utils/logger.js';
+import { iaQueue } from '../middleware/requestQueue.js';
 
 const router = express.Router();
 
 // POST /api/ia/enrich
 // Body: { content: "texte à enrichir" }
-router.post('/enrich', async (req, res) => {
+router.post('/enrich', iaQueue, async (req, res) => {
     const { content, customPrompt } = req.body;
     if (!content) {
         logError('iaEnrich.js', '[IA ENRICH] Requête sans contenu');

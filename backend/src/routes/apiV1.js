@@ -5,6 +5,7 @@ import fs from 'fs';
 import pool from '../models/db.js';
 import { logError } from '../utils/logger.js';
 import { getApiKeyPermissions } from '../middleware/validateApiKey.js';
+import { iaQueue, uploadQueue } from '../middleware/requestQueue.js';
 import {
     getArticleByName,
     getArticleByID,
@@ -71,11 +72,11 @@ router.post('/setArticle', setArticle);
 router.put('/editArticle/:id', editArticle);
 router.get('/pages', getPages);
 router.get('/categories', getCategories);
-router.post('/IaOptimiseText', iaOptimiseText);
+router.post('/IaOptimiseText', iaQueue, iaOptimiseText);
 router.post('/setAdminUser', setAdminUser);
 router.get('/getAdminUser/:id', getAdminUser);
 
-router.post('/uploadImage', upload.single('image'), async (req, res) => {
+router.post('/uploadImage', uploadQueue, upload.single('image'), async (req, res) => {
     if (!req.apiPerms.write) {
         return res.status(403).json({ message: 'Permission écriture requise' });
     }
