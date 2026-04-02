@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { FaXTwitter, FaFacebook, FaReddit, FaTiktok } from 'react-icons/fa6';
 import './ArticleContent.css';
 
 function getCategoryColor(category) {
@@ -12,6 +13,85 @@ function getCategoryColor(category) {
         'DEFAULT': 'bg-gray-500',
     };
     return colors[category?.toUpperCase()] || colors.DEFAULT;
+}
+
+function decodeHtmlEntities(str) {
+    if (!str) return '';
+    const txt = document.createElement('textarea');
+    txt.innerHTML = str;
+    return txt.value;
+}
+
+const SHARE_NETWORKS = [
+    {
+        key: 'twitter',
+        icon: FaXTwitter,
+        label: 'X (Twitter)',
+        color: 'hover:text-white',
+        getUrl: (url, title, excerpt) => {
+            const text = excerpt ? `${title}\n\n${excerpt}` : title;
+            return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        },
+    },
+    {
+        key: 'facebook',
+        icon: FaFacebook,
+        label: 'Facebook',
+        color: 'hover:text-blue-500',
+        getUrl: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    },
+    {
+        key: 'reddit',
+        icon: FaReddit,
+        label: 'Reddit',
+        color: 'hover:text-orange-500',
+        getUrl: (url, title) => `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
+    },
+    {
+        key: 'tiktok',
+        icon: FaTiktok,
+        label: 'TikTok',
+        color: 'hover:text-white',
+        getUrl: null,
+    },
+];
+
+function ShareButtons({ article }) {
+    const [copied, setCopied] = useState(false);
+    const articleUrl = `${window.location.origin}/article/${article.id}`;
+    const rawExcerpt = decodeHtmlEntities((article.excerpt || '').replace(/<[^>]+>/g, '').trim());
+    const excerpt = rawExcerpt.length > 200 ? rawExcerpt.slice(0, 200) + '…' : rawExcerpt;
+
+    const handleShare = (e, network) => {
+        e.preventDefault();
+        if (!network.getUrl) {
+            navigator.clipboard.writeText(articleUrl).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+            return;
+        }
+        window.open(network.getUrl(articleUrl, article.title || '', excerpt), '_blank', 'noopener,noreferrer,width=600,height=500');
+    };
+
+    return (
+        <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-gray-400">Partager :</span>
+            {SHARE_NETWORKS.map((network) => (
+                <button
+                    key={network.key}
+                    onClick={(e) => handleShare(e, network)}
+                    className={`flex items-center gap-1.5 text-gray-400 transition-colors ${network.color} bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full text-sm`}
+                    title={network.key === 'tiktok' ? 'Copier le lien (TikTok)' : `Partager sur ${network.label}`}
+                    type="button"
+                >
+                    <network.icon size={14} />
+                    <span>{network.label}</span>
+                </button>
+            ))}
+            {copied && <span className="text-xs text-green-400 animate-pulse">Copié !</span>}
+        </div>
+    );
 }
 
 function ArticleView() {
@@ -76,10 +156,17 @@ function ArticleView() {
                 </button>
             )}
             <div className="mb-6 text-gray-400">Publié le {new Date(article.created_at).toLocaleDateString()}</div>
+            <div className="mb-6 py-3 border-y border-gray-700">
+                <ShareButtons article={article} />
+            </div>
             {article.media_url && (
                 <img src={article.media_url} alt="" className="mb-6 rounded shadow w-full object-cover" style={{ maxHeight: '480px' }} />
             )}
             <div className="article-content" dangerouslySetInnerHTML={{ __html: normalizedContent }} />
+            <div className="mt-8 py-4 border-t border-gray-700">
+                <p className="text-sm text-gray-400 mb-3">Vous avez aimé cet article ? Partagez-le !</p>
+                <ShareButtons article={article} />
+            </div>
         </div>
     );
 }
