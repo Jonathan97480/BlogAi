@@ -170,8 +170,8 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         type="button"
                         onClick={() => setStatus(s => s === 'brouillon' ? 'publié' : 'brouillon')}
                         className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${status === 'brouillon'
-                                ? 'bg-yellow-600 text-white'
-                                : 'bg-green-600 text-white'
+                            ? 'bg-yellow-600 text-white'
+                            : 'bg-green-600 text-white'
                             }`}
                     >
                         {status === 'brouillon' ? 'Brouillon' : 'Publié'}
@@ -258,7 +258,7 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                             const height = window.prompt('Hauteur désirée', '675') || '675';
                             const labelLeft = window.prompt('Label gauche', 'Avant') || 'Avant';
                             const labelRight = window.prompt('Label droite', 'Après') || 'Après';
-                            const src = `/tools/image-compare?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&labelLeft=${encodeURIComponent(labelLeft)}&labelRight=${encodeURIComponent(labelRight)}`;
+                            const src = `/tools/image-compare?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&labelLeft=${encodeURIComponent(labelLeft)}&labelRight=${encodeURIComponent(labelRight)}&start=50`;
                             const iframe = `<iframe src="${src}" width="${width}" height="${height}" style="width:100%;max-width:${width}px;border:0;overflow:hidden;aspect-ratio:${width}/${height};display:block;margin:0 auto;" loading="lazy" referrerpolicy="same-origin"></iframe>`;
                             setContent((prev) => `${prev || ''}\n<p>${iframe}</p>`);
                         }}

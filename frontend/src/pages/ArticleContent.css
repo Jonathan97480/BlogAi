@@ -146,3 +146,17 @@
     font-size: 0.85em;
     margin-top: 0.4em;
 }
+
+/* Iframes (comparateur, vidéo embed, etc.) */
+.article-content iframe {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 0;
+    background: transparent;
+}
+
+/* Supprime le margin du <p> qui ne contient qu'un iframe */
+.article-content p:has(> iframe:only-child) {
+    margin-bottom: 0;
+}

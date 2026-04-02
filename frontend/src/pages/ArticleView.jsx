@@ -114,9 +114,10 @@ function ArticleView() {
     const normalizedContent = useMemo(() => {
         if (!article?.content) return '';
         return article.content
-            .replace(/src="http:\/\/localhost:5000\//g, 'src="/')
+            .replace(/src="https?:\/\/localhost:\d+\//g, 'src="/')
             .replace(/src="img\//g, 'src="/img/')
-            .replace(/src="\/\/img\//g, 'src="/img/');
+            .replace(/src="\/\/img\//g, 'src="/img/')
+            .replace(/src="tools\//g, 'src="/tools/');
     }, [article]);
 
     if (loading) return <div className="p-6">Chargement...</div>;

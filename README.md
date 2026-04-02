@@ -341,6 +341,14 @@ L'outil est **fonctionnel et intégré**.
 - ✅ La route `/tools/image-compare` rend le composant en mode embed (early return dans `App.jsx` — aucun header, footer, popup RGPD)
 - ✅ Le slider fonctionne correctement grâce à `clip-path` (remplacement du système `div` + calcul de largeur qui cachait l'image gauche)
 
+### Affichage dans les articles publiés
+
+| Problème | Cause | Correctif appliqué |
+|----------|-------|--------------------|
+| Header visible dans l'iframe | Le `src` stocké en BDD était `tools/image-compare...` (sans `/` initial), causant une résolution relative | `normalizedContent` dans `ArticleView` corrige `src="tools/` → `src="/tools/"` |
+| `src` avec URL complète localhost | TinyMCE sauvegardait parfois `http://localhost:5173/...` | La regex couvre tous les ports : `localhost:\d+` |
+| Espace indésirable sous l'iframe | `height` fixée par l'attribut HTML + styles inline causait un extra-space | `height: auto` forcé en CSS sur `.article-content iframe` |
+
 ### Section Outils dans le dashboard admin
 
 Une section **Outils** a été ajoutée dans le panneau d'administration (`/admin-dashboard` → menu "Outils").  
