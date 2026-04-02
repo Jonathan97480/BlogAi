@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { FaXTwitter, FaFacebook, FaReddit, FaTiktok } from 'react-icons/fa6';
+import AudioReader from '../components/AudioReader.jsx';
 import './ArticleContent.css';
 
 function getCategoryColor(category) {
@@ -156,7 +157,8 @@ function ArticleView() {
                 </button>
             )}
             <div className="mb-6 text-gray-400">Publié le {new Date(article.created_at).toLocaleDateString()}</div>
-            <div className="mb-6 py-3 border-y border-gray-700">
+            <div className="mb-6 py-3 border-y border-gray-700 flex flex-col gap-3">
+                <AudioReader title={article.title} content={normalizedContent} />
                 <ShareButtons article={article} />
             </div>
             {article.media_url && (
