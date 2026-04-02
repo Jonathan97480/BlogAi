@@ -349,5 +349,25 @@ Implémenté via le hook réutilisable `frontend/src/hooks/useInfiniteSlice.js`.
 
 > **Note :** Les routes `/api/pages/:id/posts` et `/api/posts/search` ont été corrigées pour n'exposer que les articles avec `status = 'publié'`.
 
+## Partage social (PostCard)
+
+Chaque carte d'article affiche des boutons de partage :
+
+| Réseau | Comportement |
+|--------|-------------|
+| X (Twitter) | Ouvre un tweet pré-rempli avec le titre, l'extrait et le lien |
+| Facebook | Ouvre le sharer Facebook — l'aperçu (titre, image, description) est alimenté par les balises **Open Graph** de la page article |
+| Reddit | Ouvre le formulaire Reddit avec le titre et le lien |
+| TikTok | Copie le lien dans le presse-papiers (TikTok n'expose pas d'URL de partage web) — un message `"Copié !"` s'affiche 2 secondes |
+
+### Balises Open Graph
+
+La page article (`/article/:id`) injecte dynamiquement via `react-helmet` :
+
+- `og:title`, `og:description`, `og:image`, `og:url`
+- `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
+
+> **Note :** En développement local Facebook ne peut pas crawler `localhost`. Les aperçus seront visibles uniquement sur le serveur de production.
+
 ## Auteur
 - Projet initial par [VotreNom]

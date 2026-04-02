@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import './ArticleContent.css';
 
 function getCategoryColor(category) {
@@ -40,8 +41,28 @@ function ArticleView() {
     if (loading) return <div className="p-6">Chargement...</div>;
     if (error || !article) return <div className="p-6 text-red-500">{error || 'Article introuvable.'}</div>;
 
+    const ogImage = article.media_url
+        ? `${window.location.origin}${article.media_url}`
+        : '';
+    const ogDescription = article.excerpt
+        ? article.excerpt.replace(/<[^>]+>/g, '').slice(0, 200)
+        : '';
+    const ogUrl = `${window.location.origin}/article/${article.id}`;
+
     return (
         <div className="max-w-3xl mx-auto p-6">
+            <Helmet>
+                <title>{article.title}</title>
+                <meta property="og:type" content="article" />
+                <meta property="og:url" content={ogUrl} />
+                <meta property="og:title" content={article.title} />
+                {ogDescription && <meta property="og:description" content={ogDescription} />}
+                {ogImage && <meta property="og:image" content={ogImage} />}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={article.title} />
+                {ogDescription && <meta name="twitter:description" content={ogDescription} />}
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Helmet>
             <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
             {article.category && (
                 <button
