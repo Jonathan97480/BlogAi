@@ -47,7 +47,11 @@ export default function ImageCompareTool() {
 
   useEffect(() => {
     document.body.style.margin = '0';
+    document.body.style.padding = '0';
     document.body.style.background = 'transparent';
+    document.body.style.backgroundColor = 'transparent';
+    document.documentElement.style.background = 'transparent';
+    document.documentElement.style.backgroundColor = 'transparent';
     const selectors = ['header', 'footer', 'nav'];
     const hideFixed = () => {
       document.querySelectorAll(selectors.join(',')).forEach((el) => {
@@ -131,14 +135,16 @@ export default function ImageCompareTool() {
           draggable="false"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
-        <div style={{ position: 'absolute', inset: 0, width: `${position}%`, overflow: 'hidden' }}>
-          <img
-            src={left}
-            alt={labelLeft}
-            draggable="false"
-            style={{ position: 'absolute', inset: 0, width: `${100 / Math.max(position, 0.1)}%`, height: '100%', objectFit: 'cover', objectPosition: 'left top', display: 'block' }}
-          />
-        </div>
+        <img
+          src={left}
+          alt={labelLeft}
+          draggable="false"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover', objectPosition: 'left top', display: 'block',
+            clipPath: `inset(0 ${100 - position}% 0 0)`
+          }}
+        />
 
         <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(0,0,0,.7)', color: '#fff', padding: '8px 12px', borderRadius: 999, font: '600 14px Arial' }}>{labelLeft}</div>
         <div style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(0,0,0,.7)', color: '#fff', padding: '8px 12px', borderRadius: 999, font: '600 14px Arial' }}>{labelRight}</div>

@@ -19,9 +19,13 @@ import ImageCompareTool from './pages/ImageCompareTool';
 
 function App() {
     const location = useLocation();
-    // Afficher le Header général uniquement sur les pages publiques
-    const isEmbedTool = location.pathname === '/tools/image-compare';
-    const showHeader = location.pathname !== '/admin-dashboard' && !isEmbedTool;
+
+    // Mode embed : rendu brut sans aucun chrome de page
+    if (location.pathname === '/tools/image-compare') {
+        return <ImageCompareTool />;
+    }
+
+    const showHeader = location.pathname !== '/admin-dashboard';
     return (
         <HelmetProvider>
             {showHeader && <Header />}
@@ -39,7 +43,6 @@ function App() {
                         <Route path="/article/:id" element={<ArticleView />} />
                         <Route path="/category/:category" element={<CategoryArticles />} />
                         <Route path="/mentions-legales" element={<MentionsLegales />} />
-                        <Route path="/tools/image-compare" element={<ImageCompareTool />} />
                     </Routes>
                 </div>
                 {showHeader && <Footer />}
