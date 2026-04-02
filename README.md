@@ -272,25 +272,21 @@ Exemple :
 <iframe src="/tools/image-compare?left=/img/api/a.jpg&right=/img/api/b.jpg&width=1200&height=675&labelLeft=OFF&labelRight=ON&start=50" width="1200" height="675" style="width:100%;max-width:1200px;border:0;overflow:hidden;aspect-ratio:1200/675;display:block;margin:0 auto;" loading="lazy" referrerpolicy="same-origin"></iframe>
 ```
 
-### État actuel / note pour le développeur
+### État actuel
 
-L'outil a été créé pour fournir un vrai comparateur draggable réutilisable dans les articles sans devoir générer une image composite statique.
+L'outil est **fonctionnel et intégré**.
 
-Cependant, au moment de cette note, l'intégration n'est **pas encore considérée comme finalisée** :
+- ✅ Le comparateur existe côté frontend (`/tools/image-compare`)
+- ✅ TinyMCE accepte les `iframe`
+- ✅ Un helper dans l'éditeur d'article génère le code d'intégration
+- ✅ La route `/tools/image-compare` rend le composant en mode embed (early return dans `App.jsx` — aucun header, footer, popup RGPD)
+- ✅ Le slider fonctionne correctement grâce à `clip-path` (remplacement du système `div` + calcul de largeur qui cachait l'image gauche)
 
-- le comparateur existe côté frontend ;
-- TinyMCE accepte désormais les `iframe` ;
-- un helper a été ajouté dans l'éditeur d'article pour générer le code d'intégration ;
-- **mais l'affichage dans un iframe montre encore le header du site dans certains cas**, ce qui ne devrait pas arriver pour un outil embarqué.
+### Section Outils dans le dashboard admin
 
-Le comportement attendu est :
-
-- aucune barre de navigation ;
-- aucun footer ;
-- aucun popup RGPD/cookie ;
-- uniquement le comparateur dans l'iframe.
-
-Le prochain développeur devra donc vérifier et corriger proprement le mode embed de `/tools/image-compare` (layout global, routing, rendu Vite/dev, ou masquage forcé du chrome de page).
+Une section **Outils** a été ajoutée dans le panneau d'administration (`/admin-dashboard` → menu "Outils").  
+Elle liste tous les outils disponibles avec leur documentation d'utilisation.  
+Pour ajouter un nouvel outil, compléter le tableau `TOOLS` dans `frontend/src/pages/ToolsAdmin.jsx`.
 
 ## Auteur
 - Projet initial par [VotreNom]

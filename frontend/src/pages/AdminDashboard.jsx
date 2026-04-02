@@ -5,6 +5,7 @@ import ArticleEditor from "./ArticleEditor";
 import IdeaEditor from "./IdeaEditor";
 import PagesAdmin from "./PagesAdmin";
 import Album from "./Album";
+import ToolsAdmin from "./ToolsAdmin";
 import { Helmet } from "react-helmet-async";
 
 function AdminDashboard() {
@@ -356,6 +357,7 @@ function AdminDashboard() {
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "settings" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("settings")}>Paramètres</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "archives" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("archives")}>Archivage</button>
             <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "album" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("album")}>Album</button>
+            <button className={`text-left px-3 py-2 rounded font-semibold transition ${view === "tools" ? "bg-gray-800 text-blue-400" : "hover:bg-gray-800"}`} onClick={() => setView("tools")}>Outils</button>
           </nav>
           <button onClick={handleLogout} className="mt-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Se déconnecter</button>
         </aside>
@@ -440,6 +442,7 @@ function AdminDashboard() {
             </div>
           )}
           {view === "album" && <Album />}
+          {view === "tools" && <ToolsAdmin />}
 
           {view === "archives" && (
             <>
