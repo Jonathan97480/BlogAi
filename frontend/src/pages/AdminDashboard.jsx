@@ -261,6 +261,23 @@ function AdminDashboard() {
     await reloadPosts();
   };
 
+  const handleToggleStatus = async (post) => {
+    const newStatus = post.status === 'publi\u00e9' ? 'brouillon' : 'publi\u00e9';
+    const res = await fetch(`/api/posts/${post.id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) {
+      alert('Erreur lors du changement de statut');
+      return;
+    }
+    await reloadPosts();
+  };
+
   const AdminPostCard = ({ post, archived: isArchived = false }) => (
     <div className="bg-gray-800 rounded-lg p-4 shadow flex flex-col h-full">
       {post.media_url && <img src={post.media_url} alt={post.title} className="w-full h-44 object-cover rounded mb-3 border border-gray-700" />}
@@ -306,9 +323,20 @@ function AdminDashboard() {
         </div>
       </div>
       <div className="mb-2">
-        <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${post.status === "publié" ? "bg-green-800 text-green-300" : "bg-yellow-800 text-yellow-200"}`}>
-          {post.status === "publié" ? "Publié" : "Brouillon"}
-        </span>
+        {!isArchived ? (
+          <button
+            title={post.status === 'publi\u00e9' ? 'Passer en brouillon' : 'Publier l\'article'}
+            onClick={() => handleToggleStatus(post)}
+            className={`inline-block px-2 py-0.5 text-xs font-semibold rounded cursor-pointer transition hover:opacity-80 ${post.status === 'publi\u00e9' ? 'bg-green-800 text-green-300 hover:bg-green-700' : 'bg-yellow-800 text-yellow-200 hover:bg-yellow-700'
+              }`}
+          >
+            {post.status === 'publi\u00e9' ? '\u2713 Publi\u00e9' : '\u270e Brouillon'}
+          </button>
+        ) : (
+          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${post.status === 'publi\u00e9' ? 'bg-green-800 text-green-300' : 'bg-yellow-800 text-yellow-200'}`}>
+            {post.status === 'publi\u00e9' ? 'Publi\u00e9' : 'Brouillon'}
+          </span>
+        )}
       </div>
       {post.category && <p className="text-gray-400 mb-2">Catégorie : {post.category}</p>}
       <p className="text-gray-300 mb-2 flex-1">{post.excerpt}</p>

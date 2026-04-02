@@ -310,5 +310,25 @@ Une section **Outils** a été ajoutée dans le panneau d'administration (`/admi
 Elle liste tous les outils disponibles avec leur documentation d'utilisation.  
 Pour ajouter un nouvel outil, compléter le tableau `TOOLS` dans `frontend/src/pages/ToolsAdmin.jsx`.
 
+## Dashboard admin — Articles
+
+### Filtres et recherche
+
+Dans la vue **Articles** du dashboard, une barre de contrôle est disponible :
+
+- **Champ de recherche** (avec icône loupe) : filtre en temps réel sur le titre et l'extrait
+- **Boutons de filtre** : Tous / Publiés / Brouillons — affichent le nombre d'articles correspondants
+- Les deux filtres sont combinables (ex. : rechercher "ia" parmi les brouillons)
+
+### Changement de statut rapide
+
+Le badge **Publié** / **Brouillon** sur chaque carte d'article est cliquable :
+
+- Clic → bascule immédiatement le statut (`publié` ↔ `brouillon`) via `PATCH /api/posts/:id/status`
+- La liste se recharge automatiquement après le changement
+- Sur les cartes Archives, le badge reste non cliquable
+
+Route backend ajoutée : `PATCH /api/posts/:id/status` (JWT requis, body `{ "status": "publié" | "brouillon" }`)
+
 ## Auteur
 - Projet initial par [VotreNom]

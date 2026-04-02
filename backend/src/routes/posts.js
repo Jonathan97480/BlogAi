@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { updatePost, getPostsByCategory, getAllPosts, getAllPostsAdmin, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController } from '../controllers/postsController.js';
+import { updatePost, getPostsByCategory, getAllPosts, getAllPostsAdmin, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController, updatePostStatus } from '../controllers/postsController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import pool from '../models/db.js';
 
@@ -150,6 +150,9 @@ router.get('/', getAllPosts);
 
 // Route pour récupérer un article par son id (publique)
 router.get('/:id', getPostById);
+
+// Route pour modifier le statut d'un article (publié <-> brouillon)
+router.patch('/:id/status', verifyJWT, updatePostStatus);
 
 // Route pour archiver un article
 router.post('/:id/archive', verifyJWT, archivePost);

@@ -121,6 +121,21 @@ export async function getPostById(req, res) {
 
 import pool from '../models/db.js';
 
+export async function updatePostStatus(req, res) {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (status !== 'publi\u00e9' && status !== 'brouillon') {
+        return res.status(400).json({ message: 'Statut invalide. Valeurs acceptées : publi\u00e9, brouillon.' });
+    }
+    try {
+        const [result] = await pool.query('UPDATE posts SET status = ? WHERE id = ?', [status, id]);
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Article non trouvé' });
+        res.json({ id, status });
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur lors de la mise à jour du statut' });
+    }
+}
+
 export async function createPost(req, res) {
     try {
         let image_url = null;
