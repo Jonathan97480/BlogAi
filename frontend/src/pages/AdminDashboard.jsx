@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEdit, FaArchive, FaTrash, FaUndo, FaCheckCircle } from "react-icons/fa";
+import { FaEdit, FaArchive, FaTrash, FaUndo, FaCheckCircle, FaSearch } from "react-icons/fa";
 import ArticleEditor from "./ArticleEditor";
 import IdeaEditor from "./IdeaEditor";
 import PagesAdmin from "./PagesAdmin";
 import Album from "./Album";
 import ToolsAdmin from "./ToolsAdmin";
+import Pagination from "../components/Pagination";
 import { Helmet } from "react-helmet-async";
 
 function AdminDashboard() {
@@ -35,6 +36,31 @@ function AdminDashboard() {
   const [apiPerms, setApiPerms] = useState({ read: true, write: false, ia: false, admin: false });
   const [apiKeySuccess, setApiKeySuccess] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
+
+  const [pageSize, setPageSize] = useState(() => parseInt(localStorage.getItem('adminPageSize') || '8', 10));
+  const [pageSizeInput, setPageSizeInput] = useState(() => parseInt(localStorage.getItem('adminPageSize') || '8', 10));
+  const [pageSizeSuccess, setPageSizeSuccess] = useState('');
+  const [articlesPage, setArticlesPage] = useState(1);
+  const [archivesPage, setArchivesPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('tous');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Charger page_size depuis la BDD au montage
+  useEffect(() => {
+    fetch('/api/settings/admin_page_size')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.value) {
+          const v = parseInt(data.value, 10);
+          if (!isNaN(v) && v > 0) {
+            setPageSize(v);
+            setPageSizeInput(v);
+            localStorage.setItem('adminPageSize', String(v));
+          }
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   const token = localStorage.getItem("token");
 
@@ -337,6 +363,13 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
+    setArticlesPage(1);
+    setArchivesPage(1);
+    setStatusFilter('tous');
+    setSearchQuery('');
+  }, [view]);
+
+  useEffect(() => {
     if (view !== "ideas") return;
     loadIdeas();
     loadIdeaCategories();
@@ -377,11 +410,53 @@ function AdminDashboard() {
                 />
               )}
               {error && <div className="text-red-500 mb-4">{error}</div>}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {posts.map((post) => (
-                  <AdminPostCard key={post.id} post={post} />
-                ))}
-              </div>
+              {!showArticleEditor && (
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="relative w-full max-w-md">
+                    <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+                      <FaSearch size={13} />
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Rechercher un article..."
+                      value={searchQuery}
+                      onChange={(e) => { setSearchQuery(e.target.value); setArticlesPage(1); }}
+                      className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {['tous', 'publié', 'brouillon'].map((f) => (
+                      <button
+                        key={f}
+                        className={`px-4 py-1.5 rounded font-semibold text-sm transition ${statusFilter === f
+                          ? f === 'publié' ? 'bg-green-700 text-white' : f === 'brouillon' ? 'bg-yellow-700 text-white' : 'bg-blue-700 text-white'
+                          : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                          }`}
+                        onClick={() => { setStatusFilter(f); setArticlesPage(1); }}
+                      >
+                        {f === 'tous' ? 'Tous' : f === 'publié' ? 'Publiés' : 'Brouillons'}
+                        {' '}({f === 'tous' ? posts.length : posts.filter((p) => p.status === f).length})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(() => {
+                const q = searchQuery.trim().toLowerCase();
+                const filtered = posts
+                  .filter((p) => statusFilter === 'tous' || p.status === statusFilter)
+                  .filter((p) => !q || (p.title || '').toLowerCase().includes(q) || (p.excerpt || '').toLowerCase().includes(q));
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {filtered.slice((articlesPage - 1) * pageSize, articlesPage * pageSize).map((post) => (
+                        <AdminPostCard key={post.id} post={post} />
+                      ))}
+                    </div>
+                    <Pagination page={articlesPage} total={filtered.length} size={pageSize} onPage={setArticlesPage} />
+                  </>
+                );
+              })()}
             </>
           )}
 
@@ -448,16 +523,59 @@ function AdminDashboard() {
             <>
               <h1 className="text-3xl font-bold mb-6">Archives</h1>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {archived.map((post) => (
+                {archived.slice((archivesPage - 1) * pageSize, archivesPage * pageSize).map((post) => (
                   <AdminPostCard key={post.archive_id || post.id} post={post} archived />
                 ))}
               </div>
+              <Pagination page={archivesPage} total={archived.length} size={pageSize} onPage={setArchivesPage} />
             </>
           )}
 
           {view === "settings" && (
             <div className="w-full max-w-3xl bg-gray-800 rounded-lg shadow p-6">
               <h1 className="text-3xl font-bold mb-8">Paramètres</h1>
+
+              <section className="mb-8">
+                <h2 className="text-xl font-semibold mb-2">Affichage</h2>
+                <div className="bg-gray-900 rounded p-4">
+                  <label className="block mb-1 font-semibold">Éléments par page (articles &amp; archives)</label>
+                  <div className="flex gap-2 items-center mt-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      className="w-24 p-2 rounded bg-gray-700 text-white"
+                      value={pageSizeInput}
+                      onChange={(e) => setPageSizeInput(Number(e.target.value))}
+                    />
+                    <button
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
+                      onClick={async () => {
+                        const v = Math.max(1, Math.min(50, Number(pageSizeInput)));
+                        setPageSize(v);
+                        setPageSizeInput(v);
+                        localStorage.setItem('adminPageSize', String(v));
+                        setArticlesPage(1);
+                        setArchivesPage(1);
+                        try {
+                          await fetch('/api/settings/admin_page_size', {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              Authorization: `Bearer ${localStorage.getItem('token')}`,
+                            },
+                            body: JSON.stringify({ value: v }),
+                          });
+                        } catch (_) { }
+                        setPageSizeSuccess(`✓ Enregistré : ${v} éléments par page`);
+                        setTimeout(() => setPageSizeSuccess(''), 3000);
+                      }}
+                    >Appliquer</button>
+                  </div>
+                  {pageSizeSuccess && <div className="text-green-400 text-sm mt-2 font-semibold">{pageSizeSuccess}</div>}
+                  <p className="text-gray-400 text-sm mt-2">Valeur actuelle : <strong className="text-white">{pageSize}</strong> éléments par page</p>
+                </div>
+              </section>
 
               <section className="mb-8">
                 <h2 className="text-xl font-semibold mb-2">API externe</h2>

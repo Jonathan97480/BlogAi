@@ -93,6 +93,27 @@ Via phpMyAdmin : onglet **SQL**, copier-coller le contenu du fichier.
 
 > **Important :** Sans cette migration, les routes `PUT /api/posts/:id` et `POST /api/posts` retourneront une erreur 500.
 
+#### Migration — table des paramètres (settings)
+
+```sql
+-- Fichier : database/migrate_settings.sql
+CREATE TABLE IF NOT EXISTS settings (
+  `key` VARCHAR(100) PRIMARY KEY,
+  `value` TEXT NOT NULL
+);
+INSERT INTO settings (`key`, `value`) VALUES ('admin_page_size', '8')
+  ON DUPLICATE KEY UPDATE `value` = `value`;
+```
+
+Via CLI :
+```bash
+mysql -u <user> -p <database> < database/migrate_settings.sql
+```
+
+Via phpMyAdmin : onglet **SQL**, copier-coller le contenu du fichier.
+
+> **Important :** Sans cette migration, la sauvegarde de la pagination dans le panneau d'administration retournera une erreur 500.
+
 ### 3. Ordre complet pour une nouvelle installation
 
 ```bash
@@ -108,8 +129,9 @@ cp backend/.env.example backend/.env  # puis éditer les variables
 # 3. Initialiser la base (nouvelle installation uniquement)
 cd backend && node src/initDb.js
 
-# 4. Sur un serveur existant : appliquer les migrations
+# 4. Sur un serveur existant : appliquer les migrations dans l'ordre
 mysql -u <user> -p <database> < database/migrate_add_post_status.sql
+mysql -u <user> -p <database> < database/migrate_settings.sql
 ```
 
 ---

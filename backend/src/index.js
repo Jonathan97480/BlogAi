@@ -17,6 +17,7 @@ import uploadRouter from './routes/upload.js';
 import apikeyRouter from './routes/apikey.js';
 import apiV1Router from './routes/apiV1.js';
 import socialLinkRouter from './routes/socialLink.js';
+import settingsRouter from './routes/settings.js';
 import '../src/initDb.js';
 
 dotenv.config();
@@ -40,5 +41,6 @@ app.use('/api/apikey', apikeyRouter);
 
 app.use('/api/v1', apiV1Router);
 app.use('/api/social', socialLinkRouter);
+app.use('/api/settings', settingsRouter);
 
 export default app;

@@ -94,6 +94,11 @@ const schemas = [
         id INT AUTO_INCREMENT PRIMARY KEY,
         api_key VARCHAR(255) NOT NULL UNIQUE,
         permissions VARCHAR(8) NOT NULL
+    )`,
+    // Table de paramètres génériques (clé/valeur)
+    `CREATE TABLE IF NOT EXISTS settings (
+        \`key\` VARCHAR(100) NOT NULL PRIMARY KEY,
+        \`value\` TEXT NOT NULL
     )`
 ];
 
@@ -126,6 +131,11 @@ const schemas = [
                 console.warn('Avertissement : contrainte unique_page_post non ajoutée', err.message);
             }
         }
+        // Valeur par défaut pour settings
+        await connection.query(
+            'INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = `value`',
+            ['admin_page_size', '8']
+        );
         // Ajout d'une clé API de test avec toutes les permissions si pas en production
         if (process.env.NODE_ENV !== 'production') {
             const testKey = 'sk-test-allperms';
