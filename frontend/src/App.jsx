@@ -15,11 +15,13 @@ import SearchResults from './pages/SearchResults';
 import ArticleView from './pages/ArticleView';
 import CategoryArticles from './pages/CategoryArticles';
 import MentionsLegales from './pages/MentionsLegales';
+import ImageCompareTool from './pages/ImageCompareTool';
 
 function App() {
     const location = useLocation();
     // Afficher le Header général uniquement sur les pages publiques
-    const showHeader = location.pathname !== '/admin-dashboard';
+    const isEmbedTool = location.pathname === '/tools/image-compare';
+    const showHeader = location.pathname !== '/admin-dashboard' && !isEmbedTool;
     return (
         <HelmetProvider>
             {showHeader && <Header />}
@@ -37,6 +39,7 @@ function App() {
                         <Route path="/article/:id" element={<ArticleView />} />
                         <Route path="/category/:category" element={<CategoryArticles />} />
                         <Route path="/mentions-legales" element={<MentionsLegales />} />
+                        <Route path="/tools/image-compare" element={<ImageCompareTool />} />
                     </Routes>
                 </div>
                 {showHeader && <Footer />}

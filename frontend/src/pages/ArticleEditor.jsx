@@ -239,11 +239,33 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                         image_dimensions: true,
                         object_resizing: 'img',
                         resize_img_proportional: true,
-                        extended_valid_elements: 'img[class|src|border=0|alt|title|width|height|style]',
+                        extended_valid_elements: 'img[class|src|border=0|alt|title|width|height|style],iframe[src|style|width|height|frameborder|allowfullscreen|loading|referrerpolicy|allow]',
                         content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px } img{max-width:100%;height:auto;}'
                     }}
                     onEditorChange={setContent}
                 />
+                <div className="mb-4 p-3 rounded bg-gray-900 border border-gray-700">
+                    <div className="font-semibold mb-2">Générer un iframe de comparaison</div>
+                    <button
+                        type="button"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded"
+                        onClick={() => {
+                            const left = window.prompt('URL image gauche (/img/...)');
+                            if (!left) return;
+                            const right = window.prompt('URL image droite (/img/...)');
+                            if (!right) return;
+                            const width = window.prompt('Largeur désirée', '1200') || '1200';
+                            const height = window.prompt('Hauteur désirée', '675') || '675';
+                            const labelLeft = window.prompt('Label gauche', 'Avant') || 'Avant';
+                            const labelRight = window.prompt('Label droite', 'Après') || 'Après';
+                            const src = `/tools/image-compare?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&labelLeft=${encodeURIComponent(labelLeft)}&labelRight=${encodeURIComponent(labelRight)}`;
+                            const iframe = `<iframe src="${src}" width="${width}" height="${height}" style="width:100%;max-width:${width}px;border:0;overflow:hidden;aspect-ratio:${width}/${height};display:block;margin:0 auto;" loading="lazy" referrerpolicy="same-origin"></iframe>`;
+                            setContent((prev) => `${prev || ''}\n<p>${iframe}</p>`);
+                        }}
+                    >
+                        Insérer un comparateur
+                    </button>
+                </div>
                 <div className="mb-3">
                     <label className="block mb-1 font-semibold" htmlFor="cover-image">Image de couverture <span className="text-red-500">*</span></label>
                     <input id="cover-image" type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-white bg-gray-700 rounded p-2" />

@@ -245,5 +245,52 @@ Réponse type :
 ```
 
 
+
+## Outil de comparaison d'images (iframe)
+
+Un outil frontend de comparaison d'images a été ajouté pour permettre l'intégration d'un comparateur avant/après via `iframe` dans l'éditeur TinyMCE.
+
+Route prévue :
+
+```text
+/tools/image-compare
+```
+
+Paramètres d'URL pris en charge :
+
+- `left` : URL de l'image de gauche
+- `right` : URL de l'image de droite
+- `width` : largeur désirée
+- `height` : hauteur désirée
+- `labelLeft` : libellé image gauche
+- `labelRight` : libellé image droite
+- `start` : position initiale du curseur
+
+Exemple :
+
+```html
+<iframe src="/tools/image-compare?left=/img/api/a.jpg&right=/img/api/b.jpg&width=1200&height=675&labelLeft=OFF&labelRight=ON&start=50" width="1200" height="675" style="width:100%;max-width:1200px;border:0;overflow:hidden;aspect-ratio:1200/675;display:block;margin:0 auto;" loading="lazy" referrerpolicy="same-origin"></iframe>
+```
+
+### État actuel / note pour le développeur
+
+L'outil a été créé pour fournir un vrai comparateur draggable réutilisable dans les articles sans devoir générer une image composite statique.
+
+Cependant, au moment de cette note, l'intégration n'est **pas encore considérée comme finalisée** :
+
+- le comparateur existe côté frontend ;
+- TinyMCE accepte désormais les `iframe` ;
+- un helper a été ajouté dans l'éditeur d'article pour générer le code d'intégration ;
+- **mais l'affichage dans un iframe montre encore le header du site dans certains cas**, ce qui ne devrait pas arriver pour un outil embarqué.
+
+Le comportement attendu est :
+
+- aucune barre de navigation ;
+- aucun footer ;
+- aucun popup RGPD/cookie ;
+- uniquement le comparateur dans l'iframe.
+
+Le prochain développeur devra donc vérifier et corriger proprement le mode embed de `/tools/image-compare` (layout global, routing, rendu Vite/dev, ou masquage forcé du chrome de page).
+
 ## Auteur
 - Projet initial par [VotreNom]
