@@ -37,6 +37,56 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
     const [success, setSuccess] = useState('');
     const [pages, setPages] = useState([]);
     const [status, setStatus] = useState(article?.status || 'brouillon');
+    const [showVersionModal, setShowVersionModal] = useState(false);
+    const [versions, setVersions] = useState([]);
+    const [versionsLoading, setVersionsLoading] = useState(false);
+    const [restoringId, setRestoringId] = useState(null);
+    const [restoreSuccess, setRestoreSuccess] = useState('');
+    const [restoreError, setRestoreError] = useState('');
+
+    const openVersionModal = async () => {
+        if (!article?.id) return;
+        setShowVersionModal(true);
+        setRestoreSuccess('');
+        setRestoreError('');
+        setVersionsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/posts/${article.id}/versions`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setVersions(Array.isArray(data) ? data : []);
+        } catch {
+            setVersions([]);
+        } finally {
+            setVersionsLoading(false);
+        }
+    };
+
+    const handleRestoreVersion = async (versionId) => {
+        if (!window.confirm('Restaurer cette version ? L\'état actuel sera sauvegardé avant la restauration.')) return;
+        setRestoringId(versionId);
+        setRestoreError('');
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/posts/${article.id}/versions/${versionId}/restore`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setRestoreSuccess('Version restaurée avec succès !');
+                if (onArticleSaved) onArticleSaved();
+            } else {
+                setRestoreError(data.message || 'Erreur lors de la restauration.');
+            }
+        } catch {
+            setRestoreError('Erreur réseau.');
+        } finally {
+            setRestoringId(null);
+        }
+    };
 
     // Récupère les pages à l'ouverture
     useEffect(() => {
@@ -278,6 +328,15 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                     >
                         {status === 'brouillon' ? 'Enregistrer brouillon' : 'Publier'}
                     </button>
+                    {article?.id && (
+                        <button
+                            type="button"
+                            className="flex-1 font-bold py-2 rounded bg-yellow-600 hover:bg-yellow-700 text-white"
+                            onClick={openVersionModal}
+                        >
+                            Restaurer une version
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="flex-1 font-bold py-2 rounded bg-green-600 hover:bg-green-700 text-white"
@@ -304,6 +363,60 @@ function ArticleEditor({ article, onArticleSaved, onClose }) {
                     </button>
                 </div>
             </form>
+            {/* Modal restauration de version */}
+            {showVersionModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+                    <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-lg relative max-h-[80vh] flex flex-col">
+                        <button
+                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xl"
+                            onClick={() => setShowVersionModal(false)}
+                        >
+                            <FaTimes />
+                        </button>
+                        <h3 className="text-lg font-bold mb-4">Historique des versions</h3>
+                        {restoreSuccess && <div className="text-green-400 mb-3">{restoreSuccess}</div>}
+                        {restoreError && <div className="text-red-400 mb-3">{restoreError}</div>}
+                        {versionsLoading ? (
+                            <p className="text-gray-400">Chargement...</p>
+                        ) : versions.length === 0 ? (
+                            <p className="text-gray-400">Aucune version sauvegardée pour cet article.</p>
+                        ) : (
+                            <ul className="overflow-y-auto flex-1 divide-y divide-gray-700">
+                                {versions.map((v) => {
+                                    const snap = typeof v.article === 'string' ? JSON.parse(v.article) : v.article;
+                                    const date = new Date(v.modified_at).toLocaleString('fr-FR');
+                                    return (
+                                        <li key={v.id} className="py-3 flex items-center justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-white truncate">{snap?.title || '(sans titre)'}</p>
+                                                <p className="text-sm text-gray-400">{date}</p>
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    Statut : {snap?.status || '—'}
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                disabled={restoringId === v.id}
+                                                className="shrink-0 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white text-sm font-semibold px-3 py-1 rounded"
+                                                onClick={() => handleRestoreVersion(v.id)}
+                                            >
+                                                {restoringId === v.id ? 'Restauration...' : 'Restaurer'}
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                        <button
+                            type="button"
+                            className="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded"
+                            onClick={() => setShowVersionModal(false)}
+                        >
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Modal création catégorie */}
             {showCatModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

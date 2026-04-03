@@ -18,6 +18,11 @@ export async function updatePost(req, res) {
         if (!title || !category_id || !content) {
             return res.status(400).json({ message: 'Champs obligatoires manquants.' });
         }
+        // Sauvegarde de l'ancienne version avant modification
+        const currentPost = await getById(id);
+        if (currentPost) {
+            await saveVersion(id, currentPost);
+        }
         let updateSql = 'UPDATE posts SET title = ?, category_id = ?, content = ?, status = ?';
         const params = [title, category_id, content, status || 'brouillon'];
         if (media_id) {
@@ -38,7 +43,7 @@ export async function updatePost(req, res) {
         res.status(500).json({ message: 'Erreur lors de la modification' });
     }
 }
-import { getAll, getAllAdmin, getById, create, archive, getArchived, unarchive, deletePostAndArchive } from '../models/postsModel.js';
+import { getAll, getAllAdmin, getById, create, archive, getArchived, unarchive, deletePostAndArchive, saveVersion, getVersionsByPostId, getVersionById } from '../models/postsModel.js';
 
 // Retourne tous les articles d'une catégorie (publique)
 export async function getPostsByCategory(req, res) {
@@ -157,5 +162,39 @@ export async function createPost(req, res) {
         res.status(201).json(post);
     } catch (err) {
         res.status(500).json({ message: 'Erreur serveur' });
+    }
+}
+
+// Récupère toutes les versions d'un article
+export async function getPostVersions(req, res) {
+    try {
+        const versions = await getVersionsByPostId(req.params.id);
+        res.json(versions);
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur lors de la récupération des versions' });
+    }
+}
+
+// Restaure une version précédente d'un article
+export async function restorePostVersion(req, res) {
+    try {
+        const { id, versionId } = req.params;
+        const version = await getVersionById(versionId);
+        if (!version || String(version.id_article) !== String(id)) {
+            return res.status(404).json({ message: 'Version introuvable' });
+        }
+        // Sauvegarde l'état actuel avant restauration
+        const currentPost = await getById(id);
+        if (currentPost) {
+            await saveVersion(id, currentPost);
+        }
+        const data = typeof version.article === 'string' ? JSON.parse(version.article) : version.article;
+        await pool.query(
+            'UPDATE posts SET title = ?, category_id = ?, content = ?, status = ? WHERE id = ?',
+            [data.title, data.category_id, data.content, data.status || 'brouillon', id]
+        );
+        res.json({ message: 'Version restaurée avec succès' });
+    } catch (err) {
+        res.status(500).json({ message: 'Erreur lors de la restauration' });
     }
 }

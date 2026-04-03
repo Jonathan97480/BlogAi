@@ -1,5 +1,5 @@
 import pool from '../models/db.js';
-import { create as createPost } from '../models/postsModel.js';
+import { create as createPost, getById, saveVersion } from '../models/postsModel.js';
 import { logError } from '../utils/logger.js';
 
 export async function getArticleByName(req, res) {
@@ -79,6 +79,12 @@ export async function editArticle(req, res) {
         sql += ' WHERE id = ?';
         params.push(id);
 
+        // Sauvegarde de l'ancienne version avant modification
+        const currentPost = await getById(id);
+        if (currentPost) {
+            await saveVersion(id, currentPost);
+        }
+
         const [result] = await pool.query(sql, params);
 
         if (result.affectedRows === 0) {
@@ -139,4 +145,22 @@ export async function getAdminUser(req, res) {
     const { id } = req.params;
     const [rows] = await pool.query('SELECT id, username FROM admin WHERE id = ?', [id]);
     res.json(rows[0] || null);
+}
+
+export async function getArticleVersion(req, res) {
+    if (!req.apiPerms.read) return res.status(403).json({ message: 'Permission lecture requise' });
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query(
+            'SELECT id, id_article, article, modified_at FROM post_versions WHERE id = ?',
+            [id]
+        );
+        if (!rows[0]) return res.status(404).json({ message: 'Version non trouvée' });
+        const version = rows[0];
+        const article = typeof version.article === 'string' ? JSON.parse(version.article) : version.article;
+        res.json({ id: version.id, id_article: version.id_article, modified_at: version.modified_at, article });
+    } catch (err) {
+        logError('apiV1Controller.js', err.message);
+        res.status(500).json({ message: 'Erreur lors de la récupération de la version' });
+    }
 }

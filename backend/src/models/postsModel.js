@@ -8,6 +8,47 @@ export async function deletePostAndArchive(postId) {
         throw err;
     }
 }
+
+// Sauvegarde une version de l'article avant modification
+export async function saveVersion(postId, postData) {
+    try {
+        await pool.query(
+            'INSERT INTO post_versions (id_article, article) VALUES (?, ?)',
+            [postId, JSON.stringify(postData)]
+        );
+    } catch (err) {
+        logError('postsModel.js', err.message);
+        throw err;
+    }
+}
+
+// Récupère toutes les versions d'un article
+export async function getVersionsByPostId(postId) {
+    try {
+        const [rows] = await pool.query(
+            'SELECT id, id_article, article, modified_at FROM post_versions WHERE id_article = ? ORDER BY modified_at DESC',
+            [postId]
+        );
+        return rows;
+    } catch (err) {
+        logError('postsModel.js', err.message);
+        throw err;
+    }
+}
+
+// Récupère une version précise par son id
+export async function getVersionById(versionId) {
+    try {
+        const [rows] = await pool.query(
+            'SELECT id, id_article, article, modified_at FROM post_versions WHERE id = ?',
+            [versionId]
+        );
+        return rows[0] || null;
+    } catch (err) {
+        logError('postsModel.js', err.message);
+        throw err;
+    }
+}
 // Désarchive un article (supprime la ligne dans archives)
 export async function unarchive(archiveId) {
     try {

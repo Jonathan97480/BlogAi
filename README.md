@@ -151,6 +151,28 @@ Via phpMyAdmin : onglet **SQL**, copier-coller le contenu du fichier.
 
 > **Important :** Sans cette migration, la sauvegarde de la pagination dans le panneau d'administration retournera une erreur 500.
 
+#### Migration — versioning des articles (post_versions)
+
+```sql
+-- Fichier : database/migrate_post_versions.sql
+CREATE TABLE IF NOT EXISTS post_versions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_article INT NOT NULL,
+    article JSON NOT NULL,
+    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_article) REFERENCES posts(id) ON DELETE CASCADE
+);
+```
+
+Via CLI :
+```bash
+mysql -u <user> -p <database> < database/migrate_post_versions.sql
+```
+
+Via phpMyAdmin : onglet **SQL**, copier-coller le contenu du fichier.
+
+> **Important :** Sans cette migration, toute modification d'article via `PUT /api/posts/:id` retournera une erreur 500.
+
 ### 3. Ordre complet pour une nouvelle installation
 
 ```bash
@@ -169,6 +191,7 @@ cd backend && node src/initDb.js
 # 4. Sur un serveur existant : appliquer les migrations dans l'ordre
 mysql -u <user> -p <database> < database/migrate_add_post_status.sql
 mysql -u <user> -p <database> < database/migrate_settings.sql
+mysql -u <user> -p <database> < database/migrate_post_versions.sql
 ```
 
 ---
@@ -193,6 +216,7 @@ Routes disponibles :
 
 - `GET /api/v1/getarticlebyName?name=...`
 - `GET /api/v1/getarticlebyID/:id`
+- `GET /api/v1/article-version/:id`
 - `POST /api/v1/setArticle`
 - `PUT /api/v1/editArticle/:id`
 - `GET /api/v1/pages`
@@ -220,6 +244,7 @@ Notes :
 - Le endpoint documenté précédemment sous `/api/ia/posts` n'est pas exposé par le backend actuel.
 - `setArticle` et `editArticle` utilisent désormais la structure réelle du projet (`posts`, `categorie`, `page_post`).
 - Le champ `status` (`'brouillon'` / `'publié'`) est supporté sur `setArticle` et `editArticle`.
+- `editArticle` sauvegarde automatiquement l'ancienne version dans `post_versions` avant chaque modification (même comportement que `PUT /api/posts/:id`).
 
 ### Création d'article via API externe
 
@@ -374,6 +399,44 @@ Le badge **Publié** / **Brouillon** sur chaque carte d'article est cliquable :
 - Sur les cartes Archives, le badge reste non cliquable
 
 Route backend ajoutée : `PATCH /api/posts/:id/status` (JWT requis, body `{ "status": "publié" | "brouillon" }`)
+
+## Versioning des articles
+
+Chaque modification d'un article via `PUT /api/posts/:id` ou `PUT /api/v1/editArticle/:id` sauvegarde automatiquement l'ancienne version dans la table `post_versions` avant d'appliquer les changements.
+
+### Structure de la table `post_versions`
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | INT | Identifiant de la version |
+| `id_article` | INT (FK) | Référence vers `posts.id` |
+| `article` | JSON | Snapshot complet de l'article au moment de la modification |
+| `modified_at` | TIMESTAMP | Date et heure de la sauvegarde |
+
+### Routes (JWT requis)
+
+- `GET /api/posts/:id/versions` — liste toutes les versions d'un article (du plus récent au plus ancien)
+- `POST /api/posts/:id/versions/:versionId/restore` — restaure une version précédente (l'état actuel est sauvegardé avant restauration)
+
+### Route API v1 (clé API, permission `read`)
+
+- `GET /api/v1/article-version/:id` — retourne le contenu complet d'une version par son `id`
+
+Réponse type :
+
+```json
+{
+  "id": 3,
+  "id_article": 12,
+  "modified_at": "2026-04-03T10:25:00.000Z",
+  "article": {
+    "id": 12,
+    "title": "Mon article",
+    "content": "<p>Contenu HTML...</p>",
+    "status": "publié"
+  }
+}
+```
 
 ## Infinite scroll (pages publiques)
 

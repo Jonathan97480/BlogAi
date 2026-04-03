@@ -99,6 +99,14 @@ const schemas = [
     `CREATE TABLE IF NOT EXISTS settings (
         \`key\` VARCHAR(100) NOT NULL PRIMARY KEY,
         \`value\` TEXT NOT NULL
+    )`,
+    // Table de versioning des articles (sauvegarde avant chaque modification)
+    `CREATE TABLE IF NOT EXISTS post_versions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        id_article INT NOT NULL,
+        article JSON NOT NULL,
+        modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_article) REFERENCES posts(id) ON DELETE CASCADE
     )`
 ];
 

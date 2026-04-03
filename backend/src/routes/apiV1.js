@@ -15,7 +15,8 @@ import {
     getCategories,
     iaOptimiseText,
     setAdminUser,
-    getAdminUser
+    getAdminUser,
+    getArticleVersion
 } from '../controllers/apiV1Controller.js';
 import {
     getAllIdeas,
@@ -68,6 +69,7 @@ const upload = multer({
 
 router.get('/getarticlebyName', getArticleByName);
 router.get('/getarticlebyID/:id', getArticleByID);
+router.get('/article-version/:id', getArticleVersion);
 router.post('/setArticle', setArticle);
 router.put('/editArticle/:id', editArticle);
 router.get('/pages', getPages);

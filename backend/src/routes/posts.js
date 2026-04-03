@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { updatePost, getPostsByCategory, getAllPosts, getAllPostsAdmin, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController, updatePostStatus } from '../controllers/postsController.js';
+import { updatePost, getPostsByCategory, getAllPosts, getAllPostsAdmin, getPostById, createPost, archivePost, getArchivedPosts, unarchivePost, deletePostAndArchiveController, updatePostStatus, getPostVersions, restorePostVersion } from '../controllers/postsController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
 import pool from '../models/db.js';
 
@@ -84,6 +84,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 // Route pour modifier un article (et gérer la liaison page)
 router.put('/:id', verifyJWT, upload.single('image'), updatePost);
+
+// Route pour récupérer l'historique des versions d'un article
+router.get('/:id/versions', verifyJWT, getPostVersions);
+
+// Route pour restaurer une version précédente
+router.post('/:id/versions/:versionId/restore', verifyJWT, restorePostVersion);
 
 
 // --- ROUTES IMAGES ---
